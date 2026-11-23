@@ -230,6 +230,14 @@ def postprocess(boxes: list[dict], raw: np.ndarray, cfg: Config) -> list[dict]:
 
 # ----------------------------------------------------------- scoring
 
+def needs_edit(g: dict, p: dict, pos_tol: float = 0.3, yaw_tol: float = math.radians(10),
+               size_tol: float = 0.2) -> bool:
+    """True when a matched prediction still has to be fixed by hand (see ``correction_cost``)."""
+    dyaw = abs((g["yaw"] - p["yaw"] + math.pi / 2) % math.pi - math.pi / 2)
+    return (g["label"] != VF_NAMES.get(p["label"], p["label"]) or math.hypot(g["x"] - p["x"], g["y"] - p["y"]) > pos_tol
+            or dyaw > yaw_tol or any(abs(g[k] - p[k]) > size_tol for k in ("length", "width", "height")))
+
+
 def correction_cost(gt: list[dict], pred: list[dict], min_iou: float = 0.3,
                     pos_tol: float = 0.3, yaw_tol: float = math.radians(10),
                     size_tol: float = 0.2) -> dict:
@@ -243,13 +251,7 @@ def correction_cost(gt: list[dict], pred: list[dict], min_iou: float = 0.3,
     from vf_common import match_boxes  # shared with the Day 13 grader
 
     pairs = match_boxes(gt, pred, min_iou)
-    edit = 0
-    for gi, pj, _ in pairs:
-        g, p = gt[gi], pred[pj]
-        dyaw = abs((g["yaw"] - p["yaw"] + math.pi / 2) % math.pi - math.pi / 2)
-        if (g["label"] != VF_NAMES.get(p["label"], p["label"]) or math.hypot(g["x"] - p["x"], g["y"] - p["y"]) > pos_tol
-                or dyaw > yaw_tol or any(abs(g[k] - p[k]) > size_tol for k in ("length", "width", "height"))):
-            edit += 1
+    edit = sum(needs_edit(gt[gi], pred[pj], pos_tol, yaw_tol, size_tol) for gi, pj, _ in pairs)
     tp = len(pairs)
     delete, add = len(pred) - tp, len(gt) - tp
     return {"gt": len(gt), "pred": len(pred), "match": tp, "delete": delete, "add": add,
