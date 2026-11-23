@@ -276,9 +276,14 @@ def d14_task_name(student: str, part: str) -> str:
 
 
 def cuboid_points(box: dict) -> list[float]:
-    """VF box -> CVAT cuboid points ``[x,y,z, rx,ry,rz, l,w,h]`` (inverse of ``cuboid_from_cvat``)."""
-    return [float(box["x"]), float(box["y"]), float(box["z"]), 0.0, 0.0, float(box["yaw"]),
+    """VF box -> CVAT cuboid points ``[x,y,z, rx,ry,rz, l,w,h]`` (inverse of ``cuboid_from_cvat``).
+
+    The CVAT API rejects a cuboid unless it has exactly 16 values; the 3D editor
+    stores the 9 above followed by 7 zeros, so the list is padded the same way.
+    """
+    head = [float(box["x"]), float(box["y"]), float(box["z"]), 0.0, 0.0, float(box["yaw"]),
             float(box["length"]), float(box["width"]), float(box["height"])]
+    return head + [0.0] * 7
 
 
 def cmd_day14(args) -> int:
