@@ -27,13 +27,14 @@ warnings.filterwarnings("ignore", message="torch.meshgrid")
 import vf_common as vf  # noqa: E402
 import vf_d14  # noqa: E402
 from pp_prelabel import load_config  # noqa: E402
-from vf_pp.core import Config, Detector, correction_cost, needs_edit  # noqa: E402
+from vf_pp.core import Config, Detector, correction_cost, needs_edit, within_range  # noqa: E402
 
 GREEN, YELLOW, RED, BLUE = (0, 230, 118), (255, 234, 0), (255, 23, 68), (41, 121, 255)
 
 
 def classify(gt: list[dict], pred: list[dict]) -> list[tuple[dict, tuple]]:
     """Every box to draw with its colour: matched predictions, extra predictions, missed references."""
+    gt, pred = within_range(gt), within_range(pred)  # same 50 m scope as correction_cost
     pairs = vf.match_boxes(gt, pred, 0.3)
     out, hit_g, hit_p = [], set(), set()
     for gi, pj, _ in pairs:

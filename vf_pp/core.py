@@ -238,6 +238,14 @@ def needs_edit(g: dict, p: dict, pos_tol: float = 0.3, yaw_tol: float = math.rad
             or dyaw > yaw_tol or any(abs(g[k] - p[k]) > size_tol for k in ("length", "width", "height")))
 
 
+MAX_RANGE = 50.0  # metres; the lab (like the Day 13 grader) scores only objects within this BEV range
+
+
+def within_range(boxes: list[dict], max_range: float = MAX_RANGE) -> list[dict]:
+    """Boxes whose centre is at most ``max_range`` m from the LiDAR in BEV."""
+    return [b for b in boxes if math.hypot(b["x"], b["y"]) <= max_range]
+
+
 def correction_cost(gt: list[dict], pred: list[dict], min_iou: float = 0.3,
                     pos_tol: float = 0.3, yaw_tol: float = math.radians(10),
                     size_tol: float = 0.2) -> dict:
@@ -245,11 +253,12 @@ def correction_cost(gt: list[dict], pred: list[dict], min_iou: float = 0.3,
 
     A matched box needs an edit when its class differs, the centre is off by more
     than ``pos_tol`` m, the heading by more than ``yaw_tol`` or any size by more
-    than ``size_tol`` m. Heading is compared modulo pi (front/back flips are edits
+    than ``size_tol`` m. Only boxes within ``MAX_RANGE`` m count. Heading is compared modulo pi (front/back flips are edits
     only through the class/position checks, as CVAT users fix them with one key).
     """
     from vf_common import match_boxes  # shared with the Day 13 grader
 
+    gt, pred = within_range(gt), within_range(pred)
     pairs = match_boxes(gt, pred, min_iou)
     edit = sum(needs_edit(gt[gi], pred[pj], pos_tol, yaw_tol, size_tol) for gi, pj, _ in pairs)
     tp = len(pairs)
