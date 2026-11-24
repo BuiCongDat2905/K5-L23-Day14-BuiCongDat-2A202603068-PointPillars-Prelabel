@@ -7,7 +7,9 @@
 from __future__ import annotations
 
 import argparse
+import os
 import shutil
+import stat
 import subprocess
 import sys
 import urllib.request
@@ -20,15 +22,31 @@ DEST = Path(__file__).resolve().parent / "third_party" / "PointPillars"
 WEIGHTS = DEST / "pretrained" / "epoch_160.pth"
 
 
+def _handle_readonly(func, path: str, _exc: object) -> None:
+    """Clear read-only attribute (e.g. Windows .git pack files) and retry removal."""
+    os.chmod(path, stat.S_IWRITE)
+    func(path)
+
+
+def _force_rm(path: Path) -> None:
+    """Remove a directory tree, clearing Windows read-only attributes if needed."""
+    if not path.exists() and not path.is_symlink():
+        return
+    if sys.version_info >= (3, 12):
+        shutil.rmtree(path, onexc=_handle_readonly)
+    else:
+        shutil.rmtree(path, onerror=_handle_readonly)
+
+
 def from_zip(path: Path) -> None:
     tmp = DEST.parent / "_unzip"
-    shutil.rmtree(tmp, ignore_errors=True)
+    _force_rm(tmp)
     with zipfile.ZipFile(path) as z:
         z.extractall(tmp)
     (inner,) = [p for p in tmp.iterdir() if p.is_dir()]
-    shutil.rmtree(DEST, ignore_errors=True)
+    _force_rm(DEST)
     inner.rename(DEST)
-    shutil.rmtree(tmp)
+    _force_rm(tmp)
 
 
 def main() -> int:
@@ -52,7 +70,7 @@ def main() -> int:
         from_zip(target)
         target.unlink()
     else:
-        shutil.rmtree(DEST, ignore_errors=True)
+        _force_rm(DEST)
         subprocess.run(["git", "clone", "--quiet", REPO, str(DEST)], check=True)
         subprocess.run(["git", "-C", str(DEST), "checkout", "--quiet", COMMIT], check=True)
     if not WEIGHTS.exists():
