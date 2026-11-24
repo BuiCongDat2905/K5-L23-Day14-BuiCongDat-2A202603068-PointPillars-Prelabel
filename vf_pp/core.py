@@ -7,7 +7,7 @@ Frames
 * Model box: (x, y, z_bottom, w, l, h, theta). Converted heading: ``yaw_vf = pi - theta``.
 
 The model only looks forward (x in [0, 69.12] m, |y| < 39.68 m), so a 360-degree
-frame is covered with ``passes`` rotated copies run as one batch, then merged with
+frame is covered with ``passes`` rotated copies run sequentially, then merged with
 a class-agnostic BEV NMS.
 """
 
@@ -124,17 +124,24 @@ class Detector:
     @torch.no_grad()
     def raw_detect(self, raw: np.ndarray) -> list[dict]:
         """All model boxes in the VF frame, before VF post-processing."""
+        if len(raw) == 0:
+            return []
         cfg = self.cfg
         pts, dz = prepare_points(raw, cfg)
+        x0, y0, z0, x1, y1, z1 = self.model.pc_range
         angles = [2 * math.pi * k / cfg.passes for k in range(cfg.passes)]
-        batch = []
-        for a in angles:
+        out = []
+        for pass_idx, a in enumerate(angles):
             p = pts.copy()
             p[:, :2] = _rot(pts[:, :2], a)
-            batch.append(torch.from_numpy(p).to(self.device))
-        results = self.model(batch, mode="test")
-        out = []
-        for a, res in zip(angles, results):
+            has_pts = bool(
+                ((p[:, 0] >= x0) & (p[:, 0] < x1)
+                 & (p[:, 1] >= y0) & (p[:, 1] < y1)
+                 & (p[:, 2] >= z0) & (p[:, 2] < z1)).any()
+            )
+            if not has_pts:
+                continue
+            res = self.model([torch.from_numpy(p).to(self.device)], mode="test")[0]
             if not len(res) or not isinstance(res, dict):
                 continue
             for box, lab, sc in zip(res["lidar_bboxes"], res["labels"], res["scores"]):
@@ -146,7 +153,7 @@ class Detector:
                     "z": zb + h / 2 - dz,
                     "length": l, "width": w, "height": h,
                     "yaw": (psi_m - math.pi / 2) % (2 * math.pi),
-                    "model_class": int(lab), "score": float(sc), "pass": angles.index(a),
+                    "model_class": int(lab), "score": float(sc), "pass": pass_idx,
                 })
         return out
 
