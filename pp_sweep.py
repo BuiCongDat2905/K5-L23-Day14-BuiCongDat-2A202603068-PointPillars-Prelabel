@@ -25,7 +25,7 @@ warnings.filterwarnings("ignore", message="torch.meshgrid")
 
 import vf_common as vf  # noqa: E402
 import vf_d14  # noqa: E402
-from pp_prelabel import load_config  # noqa: E402
+from pp_prelabel import apply_overrides, load_config  # noqa: E402
 from vf_pp.core import Config, Detector, correction_cost, postprocess  # noqa: E402
 
 MODEL_KNOBS = {"voxel_size", "intensity_mode", "intensity_scale", "ground_mode", "delta_z", "passes",
@@ -67,7 +67,7 @@ def main(argv=None) -> int:
     print(f"{len(combos)} cấu hình × {len(points)} frame")
     det, raw_cache, results = None, {}, []
     for combo in combos:
-        cfg = load_config_from(replace(base), dict(zip(keys, combo)))
+        cfg = load_config_from(base, dict(zip(keys, combo)))
         model_key = tuple((k, getattr(cfg, k)) for k in sorted(MODEL_KNOBS))
         # the model's internal score filter must stay below every threshold tried
         run_cfg = replace(cfg, score_thr=0.05, thr_car=None, thr_cyc=None, thr_ped=None)
@@ -109,11 +109,8 @@ def main(argv=None) -> int:
 
 
 def load_config_from(cfg: Config, values: dict) -> Config:
-    from pp_prelabel import load_config as _lc  # same casting rules as --set
-    import tempfile
-    with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as fh:
-        json.dump(cfg.to_dict(), fh)
-    return _lc(fh.name, [f"{k}={v}" for k, v in values.items()])
+    """Apply parameter overrides from ``values`` to a copy of ``cfg`` without temp files."""
+    return apply_overrides(replace(cfg), [f"{k}={v}" for k, v in values.items()])
 
 
 if __name__ == "__main__":
