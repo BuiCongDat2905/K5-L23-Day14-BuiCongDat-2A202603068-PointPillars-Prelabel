@@ -87,7 +87,16 @@ def connect(host: str, user: str, org: str | None):
 
 def find_tasks(client, name: str) -> list:
     """Tasks whose name is exactly ``name`` in the current workspace."""
-    return [task for task in client.tasks.list() if task.name == name]
+    try:
+        tasks = client.tasks.list()
+    except Exception as exc:
+        if getattr(exc, "status", None) == 404 and "organization" in f"{exc} {getattr(exc, 'body', '')}".lower():
+            org = getattr(client, "organization_slug", "") or ""
+            raise SystemExit(
+                f"Không thấy tổ chức CVAT '{org}'. Nếu chạy CVAT local (Docker), hãy bỏ cờ --org."
+            ) from None
+        raise
+    return [task for task in tasks if task.name == name]
 
 
 def create_task(client, name: str, bundle: Path):
@@ -110,12 +119,26 @@ def create_task(client, name: str, bundle: Path):
     )
 
 
+def warn_if_tracks(task_name: str, ann) -> int:
+    """Warn on stderr if CVAT annotations contain 3D cuboid Tracks (which are ignored)."""
+    tracks = getattr(ann, "tracks", None) or []
+    if tracks:
+        print(
+            f"Cảnh báo: {task_name} có {len(tracks)} cuboid dạng Track nên sẽ bị bỏ qua "
+            "(chỉ đọc Shape; hãy vẽ lại bằng Shape).",
+            file=sys.stderr,
+        )
+    return len(tracks)
+
+
 def task_boxes(client, task, scale_order: str = "lwh") -> list[dict]:
     """Read every cuboid of a task as table-A rows (without the student column)."""
     labels = {label.id: label.name for label in task.get_labels()}
     frame_names = [frame.name for frame in task.get_meta().frames]
+    ann = task.get_annotations()
+    warn_if_tracks(getattr(task, "name", None) or f"#{getattr(task, 'id', '?')}", ann)
     rows = []
-    shapes = sorted(task.get_annotations().shapes, key=lambda s: (s.frame, s.id or 0))
+    shapes = sorted(ann.shapes, key=lambda s: (s.frame, s.id or 0))
     counters: dict[str, int] = {}
     for shape in shapes:
         if str(shape.type) != "cuboid" and getattr(shape.type, "value", None) != "cuboid":
@@ -323,19 +346,22 @@ def cmd_prelabel(args) -> int:
     if args.boxes and missing:
         raise SystemExit(f"{args.boxes} thiếu frame {missing}. Chạy pp_prelabel.py với --frames {frames_file}.")
     print(f"Task: {name}  ({len(rows)} frame, {sum(len(boxes.get(n, [])) for n in names)} box pre-label)")
-    with tempfile.TemporaryDirectory() as tmp:
-        bundle = Path(args.bundle_out) if args.bundle_out else Path(tmp) / f"{name}.zip"
-        build_bundle(rows, bundle)
-        print(f"Đã đóng gói {bundle.stat().st_size / 1e6:.1f} MB.")
-        if args.dry_run:
-            print("--dry-run: không kết nối CVAT.")
-            return 0
+    client = None
+    existing = []
+    if not args.dry_run:
         if not (args.host and args.user):
             raise SystemExit("Cần --host và --user (hoặc dùng --dry-run).")
         client = connect(args.host, args.user, args.org)
         existing = find_tasks(client, name)
         if existing and not args.replace:
             print(f"Đã có task {name}: {args.host.rstrip('/')}/tasks/{existing[0].id}  (dùng --replace để tạo lại, MẤT phần đã sửa)")
+            return 0
+    with tempfile.TemporaryDirectory() as tmp:
+        bundle = Path(args.bundle_out) if args.bundle_out else Path(tmp) / f"{name}.zip"
+        build_bundle(rows, bundle)
+        print(f"Đã đóng gói {bundle.stat().st_size / 1e6:.1f} MB.")
+        if args.dry_run:
+            print("--dry-run: không kết nối CVAT.")
             return 0
         for task in existing:
             task.remove()
@@ -386,7 +412,9 @@ def cmd_reference(args) -> int:
     labels = {lab.id: lab.name for lab in task.get_labels()}
     frames = [vf.frame_name(*vf.parse_frame_name(f.name)) for f in task.get_meta().frames]
     out = {f: [] for f in frames}
-    for s in task.get_annotations().shapes:
+    ann = task.get_annotations()
+    warn_if_tracks(name, ann)
+    for s in ann.shapes:
         if getattr(s.type, "value", str(s.type)) != "cuboid":
             continue
         b = vf.cuboid_from_cvat(s.points, labels.get(s.label_id, "?"), args.scale_order, s.occluded)
