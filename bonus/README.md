@@ -30,8 +30,9 @@ Log gốc của CVAT chỉ ghi click vào nút. Nó không ghi click trên vùng
 
 Lệnh `vf_cvat.py prelabel` đã đẩy pre-label vào CVAT, và đó là phần bắt buộc, không tính điểm cộng. Thử thách ở đây là chạy PointPillars **bên trong** CVAT dưới dạng serverless function (Nuclio), để CVAT tự sinh cuboid.
 
+- Hướng dẫn từng bước: mở [`huong-dan-model-3d.html`](huong-dan-model-3d.html) bằng trình duyệt.
 - Cần CVAT tự dựng trên máy mình (Docker, kèm `components/serverless`), vì máy chủ chung của lớp không cho deploy function.
-- Các model mẫu của CVAT chỉ hỗ trợ ảnh 2D. Với task 3D, hộp thoại Automatic annotation báo "No models available", nên phải gọi API: `POST /api/lambda/requests {"function": "<tên>", "task": <id>, "threshold": 0.3}`.
+- Các model mẫu của CVAT chỉ hỗ trợ ảnh 2D. Với task 3D, hộp thoại Automatic annotation báo "No models available", vì CVAT đã từ chối mở khóa ô này (bộ chọn sẽ hiện cả model 2D), nên phải gọi API: `POST /api/lambda/requests {"function": "<tên>", "task": <id>, "threshold": 0.3}`.
 - Dashboard Nuclio (cổng 8070) không có đăng nhập. Chỉ bind vào `127.0.0.1`, không mở ra mạng.
 - Cuboid vẽ dạng shape có thể không xuất ra khi export ([cvat#9144](https://github.com/cvat-ai/cvat/issues/9144)). Hãy kiểm tra file export.
 
