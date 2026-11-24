@@ -23,6 +23,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 warnings.filterwarnings("ignore", message="torch.meshgrid")
 
+import vf_common as vf  # noqa: E402
 import vf_d14  # noqa: E402
 from pp_prelabel import load_config  # noqa: E402
 from vf_pp.core import Config, Detector, correction_cost, postprocess  # noqa: E402
@@ -42,6 +43,7 @@ def parse_grid(items):
 
 
 def main(argv=None) -> int:
+    vf.configure_utf8_stdio()
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--data", required=True)
     ap.add_argument("--frames", required=True)
@@ -85,7 +87,7 @@ def main(argv=None) -> int:
     results.sort(key=lambda r: r["cost"])
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
-    with out.open("w", newline="") as fh:
+    with out.open("w", newline="", encoding="utf-8") as fh:
         w = csv.writer(fh)
         w.writerow(keys + ["cost", "delete", "add", "edit"] + list(points))
         for r in results:
@@ -95,7 +97,7 @@ def main(argv=None) -> int:
     for r in results[:10]:
         print(f"  {r['cost']:7.2f}  xóa {r['delete']:3} thêm {r['add']:3} sửa {r['edit']:3}  {r['combo']}")
     best = Path(args.best or out.with_name("best_config.json"))
-    best.write_text(json.dumps(results[0]["cfg"].to_dict(), indent=1))
+    best.write_text(json.dumps(results[0]["cfg"].to_dict(), indent=1), encoding="utf-8")
     print(f"Cấu hình tốt nhất → {best}")
     if len(points) > 1:
         print("\nLeave-one-out (chọn trên các frame còn lại, chấm trên frame bỏ ra):")

@@ -23,12 +23,13 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 warnings.filterwarnings("ignore", message="torch.meshgrid")
 
+import vf_common as vf  # noqa: E402
 import vf_d14  # noqa: E402
 from vf_pp.core import VF_NAMES, Config, Detector, correction_cost  # noqa: E402
 
 
 def load_config(path: str | None, overrides: list[str]) -> Config:
-    cfg = Config.from_dict(json.loads(Path(path).read_text())) if path else Config()
+    cfg = Config.from_dict(json.loads(Path(path).read_text(encoding="utf-8-sig"))) if path else Config()
     for item in overrides:
         key, _, value = item.partition("=")
         if key not in Config.__dataclass_fields__:
@@ -46,6 +47,7 @@ def load_config(path: str | None, overrides: list[str]) -> Config:
 
 
 def main(argv=None) -> int:
+    vf.configure_utf8_stdio()
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--data", required=True, help="thư mục Data-VF (đã tải ở Day 13)")
     ap.add_argument("--frames", required=True, help="file danh sách frame hoặc s02f07,s03f15")

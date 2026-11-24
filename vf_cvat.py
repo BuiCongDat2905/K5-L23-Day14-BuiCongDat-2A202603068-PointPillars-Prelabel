@@ -298,7 +298,7 @@ def cmd_day14(args) -> int:
     tag = vf_d14.seed_tag(seed)
     for part, names in sets.items():
         path = out / f"frames_{part}.txt"
-        path.write_text(f"# {d14_task_name(student, part)} seed_tag={tag}\n" + "\n".join(names) + "\n")
+        path.write_text(f"# {d14_task_name(student, part)} seed_tag={tag}\n" + "\n".join(names) + "\n", encoding="utf-8")
         print(f"{path}: {' '.join(names)}")
     print(f"seed_tag={tag} (coach dùng để đối chiếu SEED)")
     return 0
@@ -399,6 +399,7 @@ def cmd_reference(args) -> int:
 
 
 def main(argv=None) -> int:
+    vf.configure_utf8_stdio()
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="command", required=True)
 

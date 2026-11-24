@@ -16,8 +16,8 @@ from pathlib import Path
 import vf_common as vf
 
 ROOT = Path(__file__).resolve().parent
-LECTURE_FRAMES = [line.split()[0] for line in (ROOT / "demo" / "frames_lec.txt").read_text().splitlines()
-                  if line.strip() and not line.startswith("#")]
+LECTURE_FRAMES = [line.split()[0] for line in (ROOT / "demo" / "frames_lec.txt").read_text(encoding="utf-8-sig").splitlines()
+                  if line.strip() and not line.lstrip().startswith("#")]
 SEED_ENV = "D14_SEED"
 
 
@@ -89,7 +89,8 @@ def read_frame_list(arg: str) -> list[str]:
     """``s02f07,s03f15`` or a text file with one frame name per line (``#`` comments)."""
     path = Path(arg)
     if path.exists():
-        names = [ln.split()[0] for ln in path.read_text().splitlines() if ln.strip() and not ln.startswith("#")]
+        names = [ln.split()[0] for ln in path.read_text(encoding="utf-8-sig").splitlines()
+                 if ln.strip() and not ln.lstrip().startswith("#")]
     else:
         names = [n for n in arg.replace(" ", ",").split(",") if n]
     return [vf.frame_name(*vf.parse_frame_name(n)) for n in names]

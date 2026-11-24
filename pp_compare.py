@@ -73,6 +73,7 @@ def changed_knobs(base: Config, tuned: Config) -> list[str]:
 
 
 def main(argv=None) -> int:
+    vf.configure_utf8_stdio()
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--data", required=True)
     ap.add_argument("--frames", required=True)

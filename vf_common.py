@@ -12,8 +12,17 @@ import math
 import random
 import re
 import struct
+import sys
 from array import array
 from pathlib import Path
+
+
+def configure_utf8_stdio() -> None:
+    """Ensure stdout and stderr emit UTF-8 on Windows even without PYTHONUTF8=1."""
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
+
 
 CLASS_NAMES = {1: "Car", 2: "Truck", 3: "Bus", 4: "Cyclist", 5: "Pedestrian"}
 CLASS_IDS = {name: cid for cid, name in CLASS_NAMES.items()}
@@ -44,7 +53,7 @@ def normalize_student(student: str) -> str:
     """Return the student id as used in task names: stripped and upper-case."""
     value = student.strip().upper()
     if not re.fullmatch(r"[A-Z0-9_-]{2,32}", value):
-        raise SystemExit(f"Mã số không hợp lệ: {student!r} (chỉ chữ, số, '-' hoặc '_').")
+        raise SystemExit(f"Mã số không hợp lệ: {student!r} (dài 2–32 ký tự, chỉ chữ, số, '-' hoặc '_').")
     return value
 
 
@@ -65,7 +74,7 @@ def parse_frame_name(name: str) -> tuple[int, int]:
         stem = stem[:-4]
     match = FRAME_NAME.match(stem)
     if not match:
-        raise ValueError(f"not a Day 13 frame name: {name}")
+        raise ValueError(f"tên frame không hợp lệ (dạng s02f07): {name}")
     return int(match.group(1)), int(match.group(2))
 
 

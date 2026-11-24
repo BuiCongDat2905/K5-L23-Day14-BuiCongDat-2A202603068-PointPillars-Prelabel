@@ -22,6 +22,9 @@ def check(name, ok, detail=""):
 
 
 def main() -> int:
+    for _s in (sys.stdout, sys.stderr):
+        if hasattr(_s, "reconfigure"):
+            _s.reconfigure(encoding="utf-8", errors="replace")
     ap = argparse.ArgumentParser()
     ap.add_argument("--data")
     args = ap.parse_args()
