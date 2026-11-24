@@ -160,7 +160,7 @@ def _hex(color: str) -> tuple[int, int, int]:
     return tuple(int(color[k:k + 2], 16) for k in (1, 3, 5))
 
 
-def _bev_tile(points, boxes, size, metres=35.0):
+def _bev_tile(points, boxes, size, metres=52.0):
     """Top view, front of the car up: x (left) → image left, y (back) → image down."""
     from PIL import Image, ImageDraw
 
@@ -174,8 +174,9 @@ def _bev_tile(points, boxes, size, metres=35.0):
         if 0 <= u < w and 0 <= v < h:
             px[u, v] = (150, 150, 160)
     draw = ImageDraw.Draw(img)
-    for r in (10, 20, 30):
-        draw.ellipse([cx - r * scale, cy - r * scale, cx + r * scale, cy + r * scale], outline=(60, 60, 70))
+    for r in (10, 20, 30, 40, 50):
+        outline = (120, 45, 45) if r == 50 else (60, 60, 70)
+        draw.ellipse([cx - r * scale, cy - r * scale, cx + r * scale, cy + r * scale], outline=outline)
     draw.polygon([(cx, cy - 6), (cx - 4, cy + 4), (cx + 4, cy + 4)], fill=(255, 255, 255))
     for box in boxes:
         color = _hex(vf.LABEL_COLORS.get(box["label"], "#ffffff"))
@@ -184,7 +185,7 @@ def _bev_tile(points, boxes, size, metres=35.0):
         head = ((ring[0][0] + ring[1][0]) / 2, (ring[0][1] + ring[1][1]) / 2)
         draw.line([(cx - box["x"] * scale, cy + box["y"] * scale), head], fill=color)
         draw.text((ring[1][0] + 2, ring[1][1]), str(box["idx"]), fill=color)
-    draw.text((6, 4), "BEV 35 m (vong 10/20/30), dau xe huong len", fill=(220, 220, 220))
+    draw.text((6, 4), "BEV 50 m (vong 10..50), dau xe huong len", fill=(220, 220, 220))
     return img
 
 

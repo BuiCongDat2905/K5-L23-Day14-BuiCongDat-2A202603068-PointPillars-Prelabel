@@ -53,6 +53,21 @@ class TestScoringRange(unittest.TestCase):
         self.assertTrue(all(math.hypot(b["x"], b["y"]) <= MAX_RANGE for b, _ in drawn))
         self.assertEqual([c for _, c in drawn], [pp_compare.GREEN])
 
+    def test_compare_bev_displays_boxes_at_50m_boundary(self):
+        import pp_compare
+
+        img = pp_compare.bev([], [(box(0.0, -48.0), pp_compare.BLUE)], "50m")
+        colors = {c for _, c in img.getcolors(maxcolors=img.width * img.height)}
+        self.assertIn((41, 121, 255), colors)
+
+    def test_qa_bev_tile_displays_boxes_at_50m_boundary(self):
+        import vf_qa
+
+        b = {**box(0.0, -48.0, label="Car"), "idx": 1}
+        img = vf_qa._bev_tile([], [b], (640, 340))
+        colors = {c for _, c in img.getcolors(maxcolors=img.width * img.height)}
+        self.assertIn((255, 23, 68), colors)
+
 
 if __name__ == "__main__":
     unittest.main()

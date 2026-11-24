@@ -46,7 +46,7 @@ def classify(gt: list[dict], pred: list[dict]) -> list[tuple[dict, tuple]]:
     return out
 
 
-def bev(points, boxes, title, size=560, metres=35.0):
+def bev(points, boxes, title, size=640, metres=52.0):
     from PIL import Image, ImageDraw
 
     img = Image.new("RGB", (size, size), (12, 12, 16))
@@ -57,8 +57,9 @@ def bev(points, boxes, title, size=560, metres=35.0):
         if 0 <= u < size and 0 <= v < size:
             px[u, v] = (110, 110, 120)
     draw = ImageDraw.Draw(img)
-    for r in (10, 20, 30):
-        draw.ellipse([c - r * scale, c - r * scale, c + r * scale, c + r * scale], outline=(50, 50, 60))
+    for r in (10, 20, 30, 40, 50):
+        outline = (120, 45, 45) if r == 50 else (50, 50, 60)
+        draw.ellipse([c - r * scale, c - r * scale, c + r * scale, c + r * scale], outline=outline)
     draw.polygon([(c, c - 6), (c - 4, c + 4), (c + 4, c + 4)], fill=(255, 255, 255))
     for box, color in boxes:
         ring = [(c - x * scale, c + y * scale) for x, y in vf.rectangle_corners(box)]
