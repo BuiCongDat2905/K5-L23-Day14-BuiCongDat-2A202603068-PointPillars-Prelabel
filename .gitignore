@@ -6,3 +6,4 @@ xem/
 __pycache__/
 *.zip
 .env
+.venv/
