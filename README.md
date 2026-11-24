@@ -56,6 +56,10 @@ Ghi đè nhanh: `--set KEY=VALUE`. Lưu cấu hình: sửa `best_config.json` r�
 VF: x trái, y sau, z lên (phía trước xe là −y), yaw 0…2π tính từ +x, ngược chiều kim đồng hồ. KITTI: x trước, y trái. Phép đổi trục nằm trong `vf_pp/core.py` (`x_kitti = −y_vf`, `y_kitti = x_vf`).
 Đã kiểm trên 6 frame của buổi giảng: với box khớp nhãn, trung vị sai lệch là 13 cm (tâm), 2° (yaw), dưới 6 cm (kích thước).
 
+## Điểm cộng (tùy chọn)
+
+Sau khi nộp xong phần bắt buộc, xem [`bonus/README.md`](bonus/README.md): đo thao tác sửa nhãn bằng userscript (hướng chính), hoặc thử chạy PointPillars trong CVAT (thử thách mở). Mỗi hướng tối đa 45 phút.
+
 ## 5. Lưu ý trung thực khi báo cáo
 
 - Model học trên KITTI (LiDAR 64 tia, chỉ phía trước, 3 lớp). Trên VF nó bỏ sót nhiều Pedestrian/Cyclist và không biết Truck/Bus. Pre-label là để **giảm** công sửa, không thay người gán nhãn.
