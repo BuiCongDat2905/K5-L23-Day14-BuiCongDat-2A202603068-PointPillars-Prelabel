@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import sys
 import unittest
+import warnings
 from pathlib import Path
 
 import numpy as np
@@ -34,7 +35,9 @@ class TestDetectorEdges(unittest.TestCase):
                     }
                     for _ in batch
                 ]
-            return real_model(batch, mode=mode)
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", message="torch.meshgrid", category=UserWarning)
+                return real_model(batch, mode=mode)
 
         _spy.pc_range = real_model.pc_range
         self.det.model = _spy
