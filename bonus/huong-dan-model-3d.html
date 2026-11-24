@@ -32,7 +32,7 @@
 <div class="card">
 <b>Mục tiêu:</b> CVAT tự sinh cuboid cho task 3D của bạn bằng một serverless function (Nuclio) bọc PointPillars, rồi so số box đó với <code>pred_*.json</code> chạy offline.
 <nav><ol>
-  <li><a href="#s1">Dựng CVAT có serverless trên máy mình</a></li>
+  <li><a href="#s1">Bật serverless cho CVAT Docker đang chạy</a></li>
   <li><a href="#s2">Viết function</a></li>
   <li><a href="#s3">Deploy</a></li>
   <li><a href="#s4">Gọi qua API (UI không cho chọn model cho task 3D)</a></li>
@@ -42,16 +42,15 @@
 </div>
 
 <div class="note">
-<b>An toàn:</b> dashboard Nuclio (cổng 8070) không có đăng nhập. Chỉ bind vào <code>127.0.0.1</code>, không mở ra mạng. Máy chủ CVAT chung của lớp không cho deploy function, nên phải dùng CVAT tự dựng.
+<b>An toàn:</b> dashboard Nuclio (cổng 8070) không có đăng nhập. Chỉ bind vào <code>127.0.0.1</code>, không mở ra mạng.
 </div>
 
-<h2 id="s1">1. Dựng CVAT có serverless</h2>
-<pre><code>git clone https://github.com/cvat-ai/cvat && cd cvat
-docker compose -f docker-compose.yml \
-  -f components/serverless/docker-compose.serverless.yml up -d
-docker exec -it cvat_server python manage.py createsuperuser</code></pre>
+<h2 id="s1">1. Bật serverless cho CVAT</h2>
+<p>Bạn đã chạy CVAT bằng Docker cho phần bắt buộc. Trong đúng thư mục <code>cvat</code> đó, chạy lại kèm file serverless để có Nuclio (dữ liệu và task cũ vẫn giữ nguyên):</p>
+<pre><code>docker compose -f docker-compose.yml \
+  -f components/serverless/docker-compose.serverless.yml up -d</code></pre>
 <p>Cài <code>nuctl</code> đúng phiên bản dashboard (xem tag image <code>quay.io/nuclio/dashboard</code> trong file serverless compose). Mac Apple Silicon: dùng image dashboard có hậu tố <code>-arm64</code> để function build native, nhanh hơn nhiều so với giả lập amd64.</p>
-<p>Tạo task 3D trên CVAT local này bằng chính dữ liệu PCD của bạn (giống cách <code>vf_cvat.py</code> tạo task trên server lớp) và ghi lại <b>task id</b>.</p>
+<p>Dùng luôn task 3D đã tạo ở phần bắt buộc (hoặc tạo task mới bằng <code>vf_cvat.py</code>) và ghi lại <b>task id</b>.</p>
 
 <h2 id="s2">2. Viết function</h2>
 <p>Một thư mục gồm <code>function.yaml</code>, <code>main.py</code> và bản sao thư mục <code>vf_pp/</code> cùng trọng số. Nuclio chỉ build những gì nằm trong thư mục này.</p>
