@@ -21,6 +21,8 @@ from __future__ import annotations
 import argparse
 import csv
 import getpass
+import hashlib
+import json
 import math
 import os
 import sys
@@ -37,6 +39,7 @@ TABLE_A_FIELDS = [
     "student", "frame", "idx", "label", "x", "y", "z", "length", "width", "height",
     "yaw_rad", "yaw_deg", "z_bottom", "dist_m", "az_deg", "dist_bin", "occluded",
 ]
+PRELABEL_STATE = Path("out") / "cvat-prelabel"
 
 
 # ------------------------------------------------------------ bundle
@@ -341,8 +344,14 @@ def _attr_specs():
             for a in PRELABEL_ATTRS]
 
 
+def prelabel_state_path(host: str, org: str | None, task_id: int, name: str) -> Path:
+    """Keep the prediction fingerprint separate for each CVAT task."""
+    identity = json.dumps([host.rstrip("/"), org or "", task_id, name])
+    key = hashlib.sha256(identity.encode("utf-8")).hexdigest()
+    return PRELABEL_STATE / f"{key}.sha256"
+
+
 def cmd_prelabel(args) -> int:
-    import json
     import vf_d14
 
     student = vf.normalize_student(args.student)
@@ -350,10 +359,12 @@ def cmd_prelabel(args) -> int:
     frames_file = Path(args.frames or d14_dir(student) / f"frames_{args.task}.txt")
     names = vf_d14.read_frame_list(str(frames_file))
     rows = vf_d14.frame_rows(Path(args.data), names)
-    boxes = json.loads(Path(args.boxes).read_text(encoding="utf-8-sig"))["frames"] if args.boxes else {}
+    prediction = json.loads(Path(args.boxes).read_text(encoding="utf-8-sig")) if args.boxes else None
+    boxes = prediction["frames"] if prediction is not None else {}
     missing = [n for n in names if n not in boxes]
     if args.boxes and missing:
         raise SystemExit(f"{args.boxes} thiếu frame {missing}. Chạy pp_prelabel.py với --frames {frames_file}.")
+    fingerprint = hashlib.sha256(json.dumps(prediction, sort_keys=True).encode("utf-8")).hexdigest()
     box_count = sum(len(boxes.get(n, [])) for n in names)
     print(f"Task: {name}  ({len(rows)} frame, {box_count} box pre-label)")
     client = None
@@ -378,6 +389,17 @@ def cmd_prelabel(args) -> int:
             if box_count and not task.get_annotations().shapes:
                 raise SystemExit(f"Task {name} chưa có nhãn dạng Shape: {link}. "
                                  "Mở task để kiểm. Nếu đã xóa hộp có chủ đích, dùng reference để xuất.")
+            if args.boxes:
+                state = prelabel_state_path(args.host, args.org, task.id, name)
+                try:
+                    original = state.read_text(encoding="ascii").strip()
+                except FileNotFoundError:
+                    print(f"Cảnh báo: chưa thể đối chiếu file dự đoán với task {name}. "
+                          "Hãy kiểm tra và dùng lại file đã nạp lúc tạo task.", file=sys.stderr)
+                else:
+                    if original != fingerprint:
+                        raise SystemExit(f"Task {name}: file dự đoán {args.boxes} đã đổi từ lúc tạo task. "
+                                         "CVAT vẫn giữ nhãn cũ. Dùng lại file đã nạp hoặc trao đổi với coach trước khi tạo lại task.")
             print(f"Đã có task {name}: {link}. Mở task để tiếp tục sửa nhãn.")
             print("Chỉ dùng --replace khi muốn xóa task và nhãn cũ để tạo lại.")
             return 0
@@ -397,6 +419,9 @@ def cmd_prelabel(args) -> int:
         task = client.tasks.create_from_data(spec=spec, resource_type=ResourceType.LOCAL, resources=[str(bundle)],
                                              data_params={"image_quality": 70, "sorting_method": "lexicographical"})
         upload_prelabels(task, boxes)
+        state = prelabel_state_path(args.host, args.org, task.id, name)
+        state.parent.mkdir(parents=True, exist_ok=True)
+        state.write_text(fingerprint, encoding="ascii")
         print(f"Tạo xong: {args.host.rstrip('/')}/tasks/{task.id}")
     return 0
 
@@ -425,20 +450,27 @@ def upload_prelabels(task, boxes: dict[str, list[dict]]) -> int:
 
 
 def cmd_reference(args) -> int:
-    import json
-
     student = vf.normalize_student(args.student)
     name = d14_task_name(student, args.task)
     client = connect(args.host, args.user, args.org)
     tasks = find_tasks(client, name)
     if not tasks:
         raise SystemExit(f"Không thấy task {name}.")
+    if len(tasks) > 1:
+        ids = ", ".join(str(task.id) for task in tasks)
+        raise SystemExit(f"Có nhiều task tên {name} (ID: {ids}). "
+                         "Kiểm ID trên CVAT và đổi tên các task còn lại trước khi xuất.")
     task = tasks[0]
+    ann = task.get_annotations()
+    tracks = getattr(ann, "tracks", None) or []
+    if tracks:
+        ids = ", ".join(str(track.id) for track in tracks)
+        link = f"{args.host.rstrip('/')}/tasks/{task.id}"
+        raise SystemExit(f"Task {name} có {len(tracks)} cuboid dạng Track (ID: {ids}): {link}. "
+                         "Vẽ lại các cuboid đó bằng Shape, xóa Track, bấm Save rồi xuất lại.")
     labels = {lab.id: lab.name for lab in task.get_labels()}
     frames = [vf.frame_name(*vf.parse_frame_name(f.name)) for f in task.get_meta().frames]
     out = {f: [] for f in frames}
-    ann = task.get_annotations()
-    warn_if_tracks(name, ann)
     for s in ann.shapes:
         if getattr(s.type, "value", str(s.type)) != "cuboid":
             continue

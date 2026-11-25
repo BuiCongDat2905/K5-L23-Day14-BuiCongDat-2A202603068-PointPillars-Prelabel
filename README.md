@@ -4,7 +4,7 @@
 
 Tài liệu: [SUBMISSION.md](SUBMISSION.md) (nộp gì, nộp ở đâu) · [RUBRIC.md](RUBRIC.md) (chấm điểm) · [CHECKPOINTS.md](CHECKPOINTS.md) (tự kiểm từng bước) · [RULES.md](RULES.md) (quy định) · [report/individual/MSSV_HoTen.md](report/individual/MSSV_HoTen.md) (template báo cáo)
 
-Chạy model PointPillars đã huấn luyện trên KITTI ([zhulf0804/PointPillars](https://github.com/zhulf0804/PointPillars), MIT, commit `620e6b0`) trên dữ liệu VF của Day 13, đẩy box lên CVAT làm pre-label, rồi tune cấu hình để **giảm công sửa tay**.
+Chạy mô hình PointPillars đã huấn luyện trên KITTI ([zhulf0804/PointPillars](https://github.com/zhulf0804/PointPillars), MIT, commit `620e6b0`) trên dữ liệu VF của Day 13. Mô hình tạo cuboid dự đoán để bạn sửa trực tiếp trên CVAT. Bạn sẽ thử nhiều cấu hình trên tập A (sweep), rồi dùng cấu hình đã chọn cho tập B.
 Code chạy bằng PyTorch trên CPU, không cần GPU và không cần biên dịch: hai op CUDA của upstream (voxelize, rotated NMS) được thay bằng bản Python thuần trong `vf_pp/upstream.py`. File của upstream giữ nguyên, không sửa dòng nào.
 
 ## 0. Cài trước buổi giảng (≈10 phút)
@@ -44,7 +44,7 @@ python pp_selftest.py --data "$DataVF"
 python pp_prelabel.py --data "$DataVF" --frames demo/frames_lec.txt --out out/lec.json --plot out/lec_png
 python pp_prelabel.py --data "$DataVF" --frames demo/frames_lec.txt --set score_thr=0.4 --set min_points=5
 ```
-Mở `out/lec_png/*.jpg` (7 camera + BEV) để xem model bắt đúng, sót và thừa ở đâu.
+Mở ảnh trong `out/lec_png/`. Mỗi ảnh ghép 7 góc camera và hình nhìn từ trên xuống (BEV). Tìm vật thể được nhận diện đúng, vật thể bị sót và cuboid bị vẽ thừa.
 
 ## 2. Lab buổi chiều: frame riêng theo mã học viên + SEED
 
@@ -55,17 +55,17 @@ SEED **chỉ được coach công bố lúc bắt đầu lab**. Thay `<ID>`, `<S
 | 1. Chọn frame | `python vf_cvat.py day14 --student "<ID>" --seed "<SEED>" --data "$DataVF"` | `d14_<ID>/frames_A.txt` (3 frame tune), `frames_B.txt` (12 frame nộp) |
 | 2. Pre-label A | `python pp_prelabel.py --data "$DataVF" --frames "d14_<ID>/frames_A.txt" --out "d14_<ID>/pred_A.json" --plot "d14_<ID>/png_A"` | box của cấu hình gốc + ảnh để xem |
 | 3. Lên CVAT | `python vf_cvat.py prelabel --student "<ID>" --task A --data "$DataVF" --boxes "d14_<ID>/pred_A.json" --host "<URL>" --user "<tên>"` | task `D14-<ID>-A` có sẵn cuboid (thuộc tính `pp_id`, `score`, `warn`, `note`) |
-| 4. Sửa tay A | Trên CVAT: xóa box thừa, thêm box thiếu, chỉnh box lệch theo guideline Day 13. **Khi thêm box mới, chọn nút `Shape` (KHÔNG chọn `Track`).** Bấm Save. | nhãn tham chiếu của bạn |
+| 4. Sửa tay A | Mở từng frame trên CVAT. Xóa hộp thừa, thêm hộp bị sót và chỉnh hộp sai theo hướng dẫn Day 13. Khi vẽ hộp mới, chọn **Shape**. Bấm **Save**. | nhãn tham chiếu của bạn |
 | 5. Lấy tham chiếu | `python vf_cvat.py reference --student "<ID>" --task A --host "<URL>" --user "<tên>"` | `d14_<ID>/ref_A.json` |
 | 5b. Dự đoán trước sweep | Làm theo [lệnh ghi và đẩy dự đoán](#đẩy-dự-đoán-trước-sweep-bước-5b). | Mục 1 báo cáo đã được push, làm bằng chứng khi đối chiếu ở bước 8 |
 | 6. Tune | `python pp_sweep.py --data "$DataVF" --frames "d14_<ID>/frames_A.txt" --gt "d14_<ID>/ref_A.json" --grid score_thr=0.1,0.2,0.3,0.4,0.5 --grid min_points=0,5,10 --out "d14_<ID>/sweep.csv"` | `sweep.csv`, `best_config.json`, top 10, leave-one-out |
 | 7. Pre-label B | `python pp_prelabel.py --data "$DataVF" --frames "d14_<ID>/frames_B.txt" --config "d14_<ID>/best_config.json" --out "d14_<ID>/pred_B.json"` rồi `python vf_cvat.py prelabel --student "<ID>" --task B --data "$DataVF" --boxes "d14_<ID>/pred_B.json" --host "<URL>" --user "<tên>"` | task `D14-<ID>-B` để sửa đủ 12 frame trên CVAT (**chọn `Shape`, KHÔNG chọn `Track`**) |
-| 8. Trước/sau | `python pp_compare.py --data "$DataVF" --frames "d14_<ID>/frames_A.txt" --gt "d14_<ID>/ref_A.json" --tuned "d14_<ID>/best_config.json" --out "d14_<ID>/compare"` | % công sửa giảm được, ảnh BEV gốc ↔ của bạn cho từng frame. Đưa 1 ảnh vào báo cáo và viết: dự đoán ở bước 5b đúng hay sai? |
-| 9. Xuất nhãn B, nộp | Sửa xong 12 frame B trên CVAT, bấm Save, rồi `python vf_cvat.py reference --student "<ID>" --task B --host "<URL>" --user "<tên>"`. Đo lại với `pp_prelabel.py --data "$DataVF" --frames "d14_<ID>/frames_B.txt" --config "d14_<ID>/best_config.json" --gt "d14_<ID>/ref_B.json"` cho mục 4 báo cáo. Commit và push theo [SUBMISSION.md](SUBMISSION.md) | `d14_<ID>/ref_B.json` (sản phẩm chính để chấm) |
+| 8. Trước/sau | `python pp_compare.py --data "$DataVF" --frames "d14_<ID>/frames_A.txt" --gt "d14_<ID>/ref_A.json" --tuned "d14_<ID>/best_config.json" --out "d14_<ID>/compare"` | Mức thay đổi chi phí sửa và ảnh so sánh từng frame. Đưa một ảnh vào báo cáo và giải thích vì sao kết quả khớp hoặc lệch dự đoán ở bước 5b. |
+| 9. Xuất nhãn B, nộp | Làm theo [bước 9 bên dưới](#xuất-nhãn-và-đo-công-sửa-tập-b-bước-9). | `d14_<ID>/ref_B.json` và số đo cho mục 4 báo cáo |
 
 ### Đẩy dự đoán trước sweep (bước 5b)
 
-Tạo repo cá nhân trống theo [mục Repo nộp](SUBMISSION.md#1-repo-nộp). Đổi tên mẫu báo cáo, rồi điền hai dòng ở mục 1 về tham số bạn dự đoán sẽ giảm công sửa và lý do dựa trên ảnh BEV tập A. Chạy các lệnh sau từ gốc repo và kiểm commit dự đoán đã xuất hiện trong repo cá nhân trên GitHub trước khi chạy sweep.
+Tạo repo cá nhân trống theo [mục Repo nộp](SUBMISSION.md#1-repo-nộp). Sao chép mẫu báo cáo thành `report/individual/<MSSV>_<HoTen>.md`. Ở mục 1, ghi tham số bạn dự đoán sẽ giảm công sửa và lý do dựa trên ảnh BEV tập A. Chạy các lệnh sau từ gốc repo. Mở GitHub và kiểm tra commit dự đoán đã xuất hiện trước khi chạy sweep.
 
 ```bash
 git remote set-url origin "https://github.com/<tài-khoản>/<repo-cá-nhân>.git"
@@ -74,11 +74,34 @@ git commit -m "5b: dự đoán"
 git push -u origin main
 ```
 
+### Xuất nhãn và đo công sửa tập B (bước 9)
+
+Sửa đủ 12 frame trên CVAT và bấm **Save**. Xuất nhãn đã sửa bằng lệnh sau.
+
+```bash
+python vf_cvat.py reference --student "<ID>" --task B --host "<URL>" --user "<tên>"
+```
+
+Chỉ chạy lệnh đo sau khi lệnh xuất in **Đã ghi**. Nếu lệnh xuất báo lỗi, xử lý lỗi ngay để tránh đo bằng bản nhãn cũ.
+
+```bash
+python pp_prelabel.py --data "$DataVF" --frames "d14_<ID>/frames_B.txt" --config "d14_<ID>/best_config.json" --gt "d14_<ID>/ref_B.json"
+```
+
+Ghi số hộp cần xóa, thêm và sửa vào mục 4 báo cáo, rồi làm theo [hướng dẫn nộp bài](SUBMISSION.md).
+
 ### Đọc số đo công sửa
 
-Số đo gồm **xóa, thêm, sửa** và chi phí `0.3·xóa + 1.0·thêm + 0.5·sửa`. Công cụ dùng phạm vi cố định 50 m theo khoảng cách ngang, ghép box khi BEV IoU ≥ 0,3 và tính một lần sửa nếu sai lớp, tâm lệch trên mặt phẳng XY quá 0,3 m, một kích thước lệch quá 0,2 m hoặc phương trục dài lệch quá 10°. Hai góc cách nhau đúng 180° có cùng phương trục dài. Khi kiểm trên CVAT, hãy căn đầu xe và đặt đáy sát mặt đường theo guideline Day 13.
+Script tính chi phí bằng `0.3·xóa + 1.0·thêm + 0.5·sửa`. Script chỉ tính hộp có tâm cách LiDAR tối đa 50 m trên mặt phẳng ngang. Hai hộp được ghép nếu độ chồng lấp khi nhìn từ trên (BEV IoU) đạt ít nhất 0,3.
 
-Các lệnh đo chi phí cần tệp tham chiếu có đủ frame của đúng tập đang chạy. Nếu thiếu frame, mở task A hoặc B tương ứng, bấm Save rồi dùng `reference` để xuất lại. Nếu `prelabel` báo task cũ sai bộ frame, chưa có job hoặc chưa có nhãn, mở link task để kiểm trước khi dùng `--replace`. Cờ đó xóa cả task và phần nhãn đã sửa.
+Một hộp đã ghép vẫn tính là cần sửa nếu sai lớp, tâm lệch ngang quá 0,3 m, một kích thước lệch quá 0,2 m hoặc phương trục dài lệch quá 10°. Hai góc cách nhau 180° có cùng phương trục dài. Trên CVAT, vẫn căn đúng đầu xe và đặt đáy hộp sát mặt đường theo hướng dẫn Day 13.
+
+### Xử lý lỗi CVAT
+
+- Nếu `reference` báo có **Track**, mở task, vẽ lại các hộp đó bằng **Shape** rồi xóa Track. Bấm **Save** và chạy lại lệnh xuất.
+- Nếu có nhiều task trùng tên, kiểm tra các ID trong thông báo. Giữ tên của task bạn sẽ xuất và đổi tên các task còn lại.
+- Các lệnh đo chi phí cần nhãn của đủ frame trong tập đang chạy. Nếu thiếu frame, kiểm tra bạn đang mở đúng task A hoặc B, bấm **Save** rồi xuất lại.
+- Khi chạy lại `prelabel`, dùng file dự đoán đã nạp lúc tạo task. Giữ thư mục `out/cvat-prelabel/` để script đối chiếu file. Script dừng nếu phát hiện file đã đổi. Nếu script báo chưa thể đối chiếu với task cũ, hãy tự kiểm file trước khi tiếp tục. `--replace` xóa task và toàn bộ nhãn đã sửa.
 
 CVAT ở đây là CVAT cá nhân chạy Docker trên máy bạn (như Day 13). Mật khẩu CVAT đọc từ biến `CVAT_PASSWORD` hoặc được hỏi khi chạy.
 

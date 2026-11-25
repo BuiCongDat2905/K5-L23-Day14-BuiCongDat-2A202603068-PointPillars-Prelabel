@@ -74,7 +74,7 @@ class TestCvatSafety(unittest.TestCase):
         self.assertIn("Shape", err)
         self.assertIn("D13-STU01", err)
 
-    def test_cmd_reference_warns_when_tracks_present(self):
+    def test_cmd_reference_rejects_tracks_and_preserves_last_export(self):
         task = SimpleNamespace(
             id=11,
             name="D14-STU01-A",
@@ -87,6 +87,7 @@ class TestCvatSafety(unittest.TestCase):
         )
         with tempfile.TemporaryDirectory() as tmp:
             out_path = Path(tmp) / "ref_A.json"
+            out_path.write_text("previous export", encoding="utf-8")
             args = SimpleNamespace(
                 student="STU01",
                 task="A",
@@ -96,19 +97,29 @@ class TestCvatSafety(unittest.TestCase):
                 out=str(out_path),
                 scale_order="lwh",
             )
-            buf = io.StringIO()
             with mock.patch("vf_cvat.connect", return_value=SimpleNamespace()), \
                  mock.patch("vf_cvat.find_tasks", return_value=[task]), \
-                 contextlib.redirect_stderr(buf), \
                  contextlib.redirect_stdout(io.StringIO()):
-                rc = vf_cvat.cmd_reference(args)
-            self.assertEqual(rc, 0)
-            err = buf.getvalue()
+                with self.assertRaises(SystemExit) as ctx:
+                    vf_cvat.cmd_reference(args)
+            err = str(ctx.exception)
             self.assertIn("Track", err)
             self.assertIn("Shape", err)
             self.assertIn("D14-STU01-A", err)
-            doc = json.loads(out_path.read_text(encoding="utf-8"))
-            self.assertEqual(doc["frames"], {"s01f00": []})
+            self.assertEqual(out_path.read_text(encoding="utf-8"), "previous export")
+
+    def test_cmd_reference_rejects_duplicate_tasks_before_reading_annotations(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out_path = Path(tmp) / "ref_B.json"
+            args = SimpleNamespace(student="STU01", task="B", host="http://localhost:8080",
+                                   user="alice", org=None, out=str(out_path), scale_order="lwh")
+            tasks = [mock.Mock(id=11), mock.Mock(id=12)]
+            with mock.patch("vf_cvat.connect"), mock.patch("vf_cvat.find_tasks", return_value=tasks):
+                with self.assertRaisesRegex(SystemExit, r"D14-STU01-B.*11, 12"):
+                    vf_cvat.cmd_reference(args)
+            for task in tasks:
+                task.get_annotations.assert_not_called()
+            self.assertFalse(out_path.exists())
 
     def test_find_tasks_turns_404_org_into_friendly_system_exit(self):
         def _raise_404():
@@ -176,6 +187,42 @@ class TestCvatSafety(unittest.TestCase):
             self.assertEqual(m_connect.call_count, 1)
             self.assertEqual(m_find.call_count, 1)
             self.assertEqual(m_bundle.call_count, 0)
+
+    def test_cmd_prelabel_rejects_changed_prediction_without_touching_task(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            data, frames_file = self._make_prelabel_workspace(tmp)
+            prediction = Path(tmp) / "pred_B.json"
+            args = SimpleNamespace(student="STU01", task="B", data=str(data), boxes=str(prediction),
+                                   frames=str(frames_file), host="http://localhost:8080",
+                                   user="alice", org=None, bundle_out=None, dry_run=False, replace=False)
+            task = mock.Mock(id=11)
+            task.get_jobs.return_value = [object()]
+            task.get_meta.return_value = SimpleNamespace(frames=[SimpleNamespace(name="pointcloud/s01f00.pcd")])
+            task.get_annotations.return_value = SimpleNamespace(shapes=[object()])
+            client = mock.Mock()
+            client.tasks.create_from_data.return_value = task
+            doc = {"meta": {"config": {"score_thr": 0.1}}, "frames": {"s01f00": [{"label": "Car"}]}}
+            prediction.write_text(json.dumps(doc), encoding="utf-8")
+            state = Path(tmp) / "state"
+            with mock.patch("vf_cvat.connect", return_value=client), \
+                 mock.patch("vf_cvat.find_tasks", side_effect=[[], [task], [task], [task]]), \
+                 mock.patch("vf_cvat.PRELABEL_STATE", state, create=True), \
+                 mock.patch("vf_cvat.upload_prelabels") as upload, \
+                 contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(vf_cvat.cmd_prelabel(args), 0)
+                prediction.write_text(json.dumps(doc, sort_keys=True, indent=2), encoding="utf-8-sig")
+                self.assertEqual(vf_cvat.cmd_prelabel(args), 0)
+                doc["meta"]["config"]["score_thr"] = 0.4
+                prediction.write_text(json.dumps(doc), encoding="utf-8")
+                with self.assertRaisesRegex(SystemExit, "file dự đoán.*đã đổi"):
+                    vf_cvat.cmd_prelabel(args)
+                with mock.patch("vf_cvat.PRELABEL_STATE", Path(tmp) / "legacy", create=True), \
+                     contextlib.redirect_stderr(io.StringIO()) as warning:
+                    self.assertEqual(vf_cvat.cmd_prelabel(args), 0)
+                self.assertIn("chưa thể đối chiếu", warning.getvalue())
+            upload.assert_called_once()
+            client.tasks.create_from_data.assert_called_once()
+            task.remove.assert_not_called()
 
     def test_cmd_prelabel_validates_host_and_user_before_building_bundle(self):
         with tempfile.TemporaryDirectory() as tmp:
