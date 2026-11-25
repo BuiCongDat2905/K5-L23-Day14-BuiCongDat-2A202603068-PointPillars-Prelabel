@@ -138,17 +138,25 @@ def save_boxes(path: Path, boxes_by_frame: dict[str, list[dict]], meta: dict | N
     path.write_text(json.dumps(doc, ensure_ascii=False, indent=1), encoding="utf-8")
 
 
-def load_reference(arg: str, data: Path | None, names: list[str]) -> dict[str, list[dict]]:
-    """Ground truth for scoring: a ``ref_*.json`` box file, or a Labels-VF folder (coach only)."""
+def load_reference(arg: str, data: Path | None, names: list[str], *,
+                   require_all: bool = False) -> dict[str, list[dict]]:
+    """Read reference boxes, optionally requiring an entry for every requested frame."""
+    if require_all and not names:
+        raise SystemExit("--frames không có frame nào. Kiểm file danh sách frame.")
     path = Path(arg)
     if path.is_file():
         frames = json.loads(path.read_text(encoding="utf-8-sig"))["frames"]
-        return {n: frames[n] for n in names if n in frames}
-    if path.is_dir() and data is not None:
-        out = {}
+    elif path.is_dir() and data is not None:
+        frames = {}
         for row in frame_rows(data, names):
             label = path / f"sequence_{row['seq']:02d}" / f"{row['stamp']}.txt"
             if label.exists():
-                out[row["name"]] = vf.load_gt(label)
-        return out
-    raise SystemExit(f"--gt {arg}: cần file ref_*.json hoặc thư mục nhãn.")
+                frames[row["name"]] = vf.load_gt(label)
+    else:
+        raise SystemExit(f"--gt {arg}: cần file ref_*.json hoặc thư mục nhãn.")
+    if require_all:
+        missing = [name for name in names if name not in frames]
+        if missing:
+            raise SystemExit(f"--gt {arg} thiếu frame: {', '.join(missing)}. "
+                             "Kiểm --frames và xuất lại đúng tập A hoặc B từ CVAT.")
+    return {name: frames[name] for name in names if name in frames}

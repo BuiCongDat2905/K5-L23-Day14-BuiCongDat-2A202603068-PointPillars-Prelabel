@@ -12,7 +12,7 @@ Code chạy bằng PyTorch trên CPU, không cần GPU và không cần biên d�
 **Windows (PowerShell):**
 
 ```powershell
-git clone <URL repo này> k5-day14-lab
+git clone https://github.com/VinUni-AI20k/K5-L23-Day14-PointPillars-Prelabel.git k5-day14-lab
 cd k5-day14-lab
 python -m venv .venv
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
@@ -21,47 +21,64 @@ $env:PYTHONUTF8 = "1"
 pip install torch --index-url https://download.pytorch.org/whl/cpu
 pip install -r requirements.txt
 python setup_pp.py                    # tải code upstream + weights (~20 MB); không có git: python setup_pp.py --download-zip
-python pp_selftest.py --data <Data-VF>
+$DataVF = "C:\duong-dan\Data-VF"
+python pp_selftest.py --data "$DataVF"
 ```
 
 **macOS / Linux (bash/zsh):**
 
 ```bash
-git clone <URL repo này> k5-day14-lab && cd k5-day14-lab
+git clone https://github.com/VinUni-AI20k/K5-L23-Day14-PointPillars-Prelabel.git k5-day14-lab && cd k5-day14-lab
 python -m venv .venv && source .venv/bin/activate
 pip install torch --index-url https://download.pytorch.org/whl/cpu
 pip install -r requirements.txt
 python setup_pp.py                    # tải code upstream + weights (~20 MB); không có git: python setup_pp.py --download-zip
-python pp_selftest.py --data <Data-VF>
+DataVF="/duong-dan/Data-VF"
+python pp_selftest.py --data "$DataVF"
 ```
-`<Data-VF>` là thư mục dữ liệu đã tải ở Day 13 (chứa `sequence_01 … sequence_05`). Selftest in `TẤT CẢ OK` là xong. Nếu máy lỗi, dùng Docker theo hướng dẫn trong `Dockerfile`.
+Đặt `DataVF` thành đường dẫn thực tế tới thư mục VF từ Day 13. Thư mục này phải chứa trực tiếp `sequence_01` đến `sequence_05`, mỗi sequence có đủ 60 frame LiDAR. Khi mở terminal mới, đặt lại biến trước khi chạy lệnh. Selftest in `TẤT CẢ OK` khi cài đặt thành công. Nếu dùng Docker, xem hướng dẫn trong `Dockerfile`.
 
 ## 1. Buổi giảng: 6 frame chung (mọi người giống nhau)
 
 ```bash
-python pp_prelabel.py --data <Data-VF> --frames demo/frames_lec.txt --out out/lec.json --plot out/lec_png
-python pp_prelabel.py --data <Data-VF> --frames demo/frames_lec.txt --set score_thr=0.4 --set min_points=5
+python pp_prelabel.py --data "$DataVF" --frames demo/frames_lec.txt --out out/lec.json --plot out/lec_png
+python pp_prelabel.py --data "$DataVF" --frames demo/frames_lec.txt --set score_thr=0.4 --set min_points=5
 ```
 Mở `out/lec_png/*.jpg` (7 camera + BEV) để xem model bắt đúng, sót và thừa ở đâu.
 
 ## 2. Lab buổi chiều: frame riêng theo mã học viên + SEED
 
-SEED **chỉ được coach công bố lúc bắt đầu lab**. Không có SEED thì lệnh từ chối chạy.
+SEED **chỉ được coach công bố lúc bắt đầu lab**. Thay `<ID>`, `<SEED>` và `<tên>` bằng giá trị thực tế. Với CVAT local, thay `<URL>` bằng `http://localhost:8080`. Cú pháp tùy chọn `[--org <SLUG>]` áp dụng khi dùng tổ chức CVAT.
 
 | Bước | Lệnh | Kết quả |
 |---|---|---|
-| 1. Chọn frame | `python vf_cvat.py day14 --student <ID> --seed <SEED> --data <Data-VF>` | `d14_<ID>/frames_A.txt` (3 frame tune), `frames_B.txt` (12 frame nộp) |
-| 2. Pre-label A | `python pp_prelabel.py --data <Data-VF> --frames d14_<ID>/frames_A.txt --out d14_<ID>/pred_A.json --plot d14_<ID>/png_A` | box của cấu hình gốc + ảnh để xem |
-| 3. Lên CVAT | `python vf_cvat.py prelabel --student <ID> --task A --data <Data-VF> --boxes d14_<ID>/pred_A.json --host <URL> --user <tên> [--org <SLUG>]` *(bỏ `--org` nếu dùng CVAT Docker local)* | task `D14-<ID>-A` có sẵn cuboid (thuộc tính `pp_id`, `score`, `warn`, `note`) |
+| 1. Chọn frame | `python vf_cvat.py day14 --student "<ID>" --seed "<SEED>" --data "$DataVF"` | `d14_<ID>/frames_A.txt` (3 frame tune), `frames_B.txt` (12 frame nộp) |
+| 2. Pre-label A | `python pp_prelabel.py --data "$DataVF" --frames "d14_<ID>/frames_A.txt" --out "d14_<ID>/pred_A.json" --plot "d14_<ID>/png_A"` | box của cấu hình gốc + ảnh để xem |
+| 3. Lên CVAT | `python vf_cvat.py prelabel --student "<ID>" --task A --data "$DataVF" --boxes "d14_<ID>/pred_A.json" --host "<URL>" --user "<tên>"` | task `D14-<ID>-A` có sẵn cuboid (thuộc tính `pp_id`, `score`, `warn`, `note`) |
 | 4. Sửa tay A | Trên CVAT: xóa box thừa, thêm box thiếu, chỉnh box lệch theo guideline Day 13. **Khi thêm box mới, chọn nút `Shape` (KHÔNG chọn `Track`).** Bấm Save. | nhãn tham chiếu của bạn |
-| 5. Lấy tham chiếu | `python vf_cvat.py reference --student <ID> --task A --host <URL> --user <tên> [--org <SLUG>]` | `d14_<ID>/ref_A.json` |
-| 5b. Đoán trước | Trước khi chạy sweep, ghi vào mục 1 báo cáo (`report/individual/<MSSV>_<HoTen>.md`) 2 dòng: *tham số nào bạn nghĩ giảm công sửa nhiều nhất, và vì sao* (nhìn ảnh BEV: box thừa nhiều hay sót nhiều?), rồi `git commit -m "5b: dự đoán"` và `git push` ngay. | bằng chứng commit trước sweep để đối chiếu ở bước 8 |
-| 6. Tune | `python pp_sweep.py --data <Data-VF> --frames d14_<ID>/frames_A.txt --gt d14_<ID>/ref_A.json --grid score_thr=0.1,0.2,0.3,0.4,0.5 --grid min_points=0,5,10 --out d14_<ID>/sweep.csv` | `sweep.csv`, `best_config.json`, top 10, leave-one-out |
-| 7. Pre-label B | `python pp_prelabel.py --data <Data-VF> --frames d14_<ID>/frames_B.txt --config d14_<ID>/best_config.json --out d14_<ID>/pred_B.json` rồi `python vf_cvat.py prelabel --student <ID> --task B --data <Data-VF> --boxes d14_<ID>/pred_B.json --host <URL> --user <tên> [--org <SLUG>]` | task `D14-<ID>-B` để sửa đủ 12 frame trên CVAT (**chọn `Shape`, KHÔNG chọn `Track`**) |
-| 8. Trước/sau | `python pp_compare.py --data <Data-VF> --frames d14_<ID>/frames_A.txt --gt d14_<ID>/ref_A.json --tuned d14_<ID>/best_config.json --out d14_<ID>/compare` | % công sửa giảm được, ảnh BEV gốc ↔ của bạn cho từng frame. Đưa 1 ảnh vào báo cáo và viết: dự đoán ở bước 5b đúng hay sai? |
-| 9. Xuất nhãn B, nộp | Sửa xong 12 frame B trên CVAT, bấm Save, rồi `python vf_cvat.py reference --student <ID> --task B --host <URL> --user <tên> [--org <SLUG>]`. Đo lại với `pp_prelabel.py --data <Data-VF> --frames d14_<ID>/frames_B.txt --config d14_<ID>/best_config.json --gt d14_<ID>/ref_B.json` cho mục 4 báo cáo. Commit và push theo [SUBMISSION.md](SUBMISSION.md) | `d14_<ID>/ref_B.json` (sản phẩm chính để chấm) |
+| 5. Lấy tham chiếu | `python vf_cvat.py reference --student "<ID>" --task A --host "<URL>" --user "<tên>"` | `d14_<ID>/ref_A.json` |
+| 5b. Dự đoán trước sweep | Làm theo [lệnh ghi và đẩy dự đoán](#đẩy-dự-đoán-trước-sweep-bước-5b). | Mục 1 báo cáo đã được push, làm bằng chứng khi đối chiếu ở bước 8 |
+| 6. Tune | `python pp_sweep.py --data "$DataVF" --frames "d14_<ID>/frames_A.txt" --gt "d14_<ID>/ref_A.json" --grid score_thr=0.1,0.2,0.3,0.4,0.5 --grid min_points=0,5,10 --out "d14_<ID>/sweep.csv"` | `sweep.csv`, `best_config.json`, top 10, leave-one-out |
+| 7. Pre-label B | `python pp_prelabel.py --data "$DataVF" --frames "d14_<ID>/frames_B.txt" --config "d14_<ID>/best_config.json" --out "d14_<ID>/pred_B.json"` rồi `python vf_cvat.py prelabel --student "<ID>" --task B --data "$DataVF" --boxes "d14_<ID>/pred_B.json" --host "<URL>" --user "<tên>"` | task `D14-<ID>-B` để sửa đủ 12 frame trên CVAT (**chọn `Shape`, KHÔNG chọn `Track`**) |
+| 8. Trước/sau | `python pp_compare.py --data "$DataVF" --frames "d14_<ID>/frames_A.txt" --gt "d14_<ID>/ref_A.json" --tuned "d14_<ID>/best_config.json" --out "d14_<ID>/compare"` | % công sửa giảm được, ảnh BEV gốc ↔ của bạn cho từng frame. Đưa 1 ảnh vào báo cáo và viết: dự đoán ở bước 5b đúng hay sai? |
+| 9. Xuất nhãn B, nộp | Sửa xong 12 frame B trên CVAT, bấm Save, rồi `python vf_cvat.py reference --student "<ID>" --task B --host "<URL>" --user "<tên>"`. Đo lại với `pp_prelabel.py --data "$DataVF" --frames "d14_<ID>/frames_B.txt" --config "d14_<ID>/best_config.json" --gt "d14_<ID>/ref_B.json"` cho mục 4 báo cáo. Commit và push theo [SUBMISSION.md](SUBMISSION.md) | `d14_<ID>/ref_B.json` (sản phẩm chính để chấm) |
 
-Đo lại: `pp_prelabel.py ... --config <cfg> --gt d14_<ID>/ref_A.json` in số box phải **xóa / thêm / sửa** và chi phí `0.3·xóa + 1.0·thêm + 0.5·sửa`. Chỉ tính box có tâm cách LiDAR tối đa 50 m (cố định, không đổi theo tham số `range_m`). Box dự đoán khớp box tham chiếu khi IoU nhìn từ trên xuống (BEV) ≥ 0.3. Một box khớp vẫn bị tính "sửa" khi sai lớp, tâm lệch quá 0.3 m, yaw lệch quá 10° hoặc một cạnh lệch quá 0.2 m.
+### Đẩy dự đoán trước sweep (bước 5b)
+
+Tạo repo cá nhân trống theo [mục Repo nộp](SUBMISSION.md#1-repo-nộp). Đổi tên mẫu báo cáo, rồi điền hai dòng ở mục 1 về tham số bạn dự đoán sẽ giảm công sửa và lý do dựa trên ảnh BEV tập A. Chạy các lệnh sau từ gốc repo và kiểm commit dự đoán đã xuất hiện trong repo cá nhân trên GitHub trước khi chạy sweep.
+
+```bash
+git remote set-url origin "https://github.com/<tài-khoản>/<repo-cá-nhân>.git"
+git add "report/individual/<MSSV>_<HoTen>.md"
+git commit -m "5b: dự đoán"
+git push -u origin main
+```
+
+### Đọc số đo công sửa
+
+Số đo gồm **xóa, thêm, sửa** và chi phí `0.3·xóa + 1.0·thêm + 0.5·sửa`. Công cụ dùng phạm vi cố định 50 m theo khoảng cách ngang, ghép box khi BEV IoU ≥ 0,3 và tính một lần sửa nếu sai lớp, tâm lệch trên mặt phẳng XY quá 0,3 m, một kích thước lệch quá 0,2 m hoặc phương trục dài lệch quá 10°. Hai góc cách nhau đúng 180° có cùng phương trục dài. Khi kiểm trên CVAT, hãy căn đầu xe và đặt đáy sát mặt đường theo guideline Day 13.
+
+Các lệnh đo chi phí cần tệp tham chiếu có đủ frame của đúng tập đang chạy. Nếu thiếu frame, mở task A hoặc B tương ứng, bấm Save rồi dùng `reference` để xuất lại. Nếu `prelabel` báo task cũ sai bộ frame, chưa có job hoặc chưa có nhãn, mở link task để kiểm trước khi dùng `--replace`. Cờ đó xóa cả task và phần nhãn đã sửa.
 
 CVAT ở đây là CVAT cá nhân chạy Docker trên máy bạn (như Day 13). Mật khẩu CVAT đọc từ biến `CVAT_PASSWORD` hoặc được hỏi khi chạy.
 
@@ -89,3 +106,7 @@ Sau khi nộp xong phần bắt buộc, xem [`bonus/README.md`](bonus/README.md)
 - Model học trên KITTI (LiDAR 64 tia, chỉ phía trước, 3 lớp). Trên VF nó bỏ sót nhiều Pedestrian/Cyclist và không biết Truck/Bus. Pre-label là để **giảm** công sửa, không thay người gán nhãn.
 - 3 frame tune là ít. Hãy đọc phần leave-one-out của `pp_sweep.py` trước khi tin cấu hình "tốt nhất".
 - Mọi box nộp phải được người kiểm. Không nộp thẳng box của model.
+
+## Góp ý bài lab (30 giây)
+
+Mở [form góp ý bài lab](https://docs.google.com/forms/d/e/1FAIpQLSd8Mh7YkGEn-hnaePgbli4KqJ8-rkzCrFOIjr3YyCcrDs1UHA/viewform?usp=publish-editor) và chọn **L2 · Day14** hoặc **L3 · Day14** theo lớp của bạn. Form không yêu cầu email, họ tên hoặc MSSV.

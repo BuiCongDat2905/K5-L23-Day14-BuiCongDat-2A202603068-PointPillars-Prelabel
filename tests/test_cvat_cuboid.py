@@ -164,8 +164,11 @@ class TestCvatSafety(unittest.TestCase):
                 dry_run=False,
                 replace=False,
             )
+            task = mock.Mock(id=42)
+            task.get_jobs.return_value = [object()]
+            task.get_meta.return_value = SimpleNamespace(frames=[SimpleNamespace(name="pointcloud/s01f00.pcd")])
             with mock.patch("vf_cvat.connect", return_value=SimpleNamespace()) as m_connect, \
-                 mock.patch("vf_cvat.find_tasks", return_value=[SimpleNamespace(id=42)]) as m_find, \
+                 mock.patch("vf_cvat.find_tasks", return_value=[task]) as m_find, \
                  mock.patch("vf_cvat.build_bundle", wraps=vf_cvat.build_bundle) as m_bundle, \
                  contextlib.redirect_stdout(io.StringIO()):
                 rc = vf_cvat.cmd_prelabel(args)

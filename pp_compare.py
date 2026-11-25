@@ -88,9 +88,9 @@ def main(argv=None) -> int:
     import vf_qa
 
     data, out = Path(args.data), Path(args.out)
-    out.mkdir(parents=True, exist_ok=True)
     names = vf_d14.read_frame_list(args.frames)
-    gt = vf_d14.load_reference(args.gt, data, names)
+    gt = vf_d14.load_reference(args.gt, data, names, require_all=True)
+    out.mkdir(parents=True, exist_ok=True)
     configs = {"gốc": load_config(args.base, []), "của bạn": load_config(args.tuned, [])}
     print("Tham số đã đổi:", "; ".join(changed_knobs(*configs.values())) or "(không có)")
 
@@ -99,14 +99,12 @@ def main(argv=None) -> int:
     for label, cfg in configs.items():
         det.set_config(cfg)
         preds[label] = {r["name"]: [vf_d14.as_vf_box(b) for b in det.detect(vf_d14.load_points(r))]
-                        for r in vf_d14.frame_rows(data, names) if r["name"] in gt}
+                        for r in vf_d14.frame_rows(data, names)}
 
     totals = {label: 0.0 for label in configs}
     print(f"\n{'frame':8} {'chi phí gốc':>12} {'của bạn':>9}")
     for row in vf_d14.frame_rows(data, names):
         name = row["name"]
-        if name not in gt:
-            continue
         points = vf_qa.points_xyz(row["lidar"])
         tiles, costs = [], []
         for label in configs:

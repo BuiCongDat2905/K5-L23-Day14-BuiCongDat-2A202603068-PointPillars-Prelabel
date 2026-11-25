@@ -315,6 +315,15 @@ def cmd_day14(args) -> int:
     student = vf.normalize_student(args.student)
     seed = vf_d14.get_seed(args.seed)
     counts = {s: len(st) for s, st in vf.list_sequences(Path(args.data)).items()}
+    expected = dict.fromkeys(range(1, 6), 60)
+    if counts != expected:
+        details = [
+            f"sequence_{seq:02d}: {counts.get(seq, 0)}/{expected.get(seq, 0)} frame"
+            for seq in sorted(counts.keys() | expected.keys())
+            if counts.get(seq, 0) != expected.get(seq, 0)
+        ]
+        raise SystemExit(f"Data-VF phải đủ 5 sequence, mỗi sequence 60 frame. "
+                         f"Kiểm đường dẫn và giải nén lại: {', '.join(details)}.")
     sets = vf_d14.select_d14(student, seed, counts)
     out = d14_dir(student)
     out.mkdir(exist_ok=True)
@@ -345,7 +354,8 @@ def cmd_prelabel(args) -> int:
     missing = [n for n in names if n not in boxes]
     if args.boxes and missing:
         raise SystemExit(f"{args.boxes} thiếu frame {missing}. Chạy pp_prelabel.py với --frames {frames_file}.")
-    print(f"Task: {name}  ({len(rows)} frame, {sum(len(boxes.get(n, [])) for n in names)} box pre-label)")
+    box_count = sum(len(boxes.get(n, [])) for n in names)
+    print(f"Task: {name}  ({len(rows)} frame, {box_count} box pre-label)")
     client = None
     existing = []
     if not args.dry_run:
@@ -354,7 +364,22 @@ def cmd_prelabel(args) -> int:
         client = connect(args.host, args.user, args.org)
         existing = find_tasks(client, name)
         if existing and not args.replace:
-            print(f"Đã có task {name}: {args.host.rstrip('/')}/tasks/{existing[0].id}  (dùng --replace để tạo lại, MẤT phần đã sửa)")
+            if len(existing) > 1:
+                ids = ", ".join(str(task.id) for task in existing)
+                raise SystemExit(f"Có nhiều task tên {name} (ID: {ids}). Kiểm trên CVAT trước khi chạy lại.")
+            task = existing[0]
+            link = f"{args.host.rstrip('/')}/tasks/{task.id}"
+            if not task.get_jobs():
+                raise SystemExit(f"Task {name} chưa có job: {link}. Chờ CVAT xử lý rồi chạy lại.")
+            actual = [Path(frame.name).stem for frame in task.get_meta().frames]
+            if actual != sorted(names):
+                raise SystemExit(f"Task {name} không khớp bộ frame được giao: {link}. "
+                                 "Kiểm SEED và file frames. Báo coach trước khi tạo lại task đã sửa.")
+            if box_count and not task.get_annotations().shapes:
+                raise SystemExit(f"Task {name} chưa có nhãn dạng Shape: {link}. "
+                                 "Mở task để kiểm. Nếu đã xóa hộp có chủ đích, dùng reference để xuất.")
+            print(f"Đã có task {name}: {link}. Mở task để tiếp tục sửa nhãn.")
+            print("Chỉ dùng --replace khi muốn xóa task và nhãn cũ để tạo lại.")
             return 0
     with tempfile.TemporaryDirectory() as tmp:
         bundle = Path(args.bundle_out) if args.bundle_out else Path(tmp) / f"{name}.zip"

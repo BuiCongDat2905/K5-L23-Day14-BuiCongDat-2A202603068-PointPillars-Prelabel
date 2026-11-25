@@ -6,7 +6,7 @@ Bài **cá nhân**. Mỗi học viên nộp **link tới commit bài nộp** tro
 
 - Tên repo: `K5-L23-DAY14-HoVaTen-MSSV-PointPillarsPrelabel`, viết không dấu, không khoảng trắng.
   Ví dụ: `K5-L23-DAY14-NguyenVanAn-2A20260000-PointPillarsPrelabel`.
-- Tạo repo mới trên GitHub với tên trên, rồi đẩy thư mục lab đã làm lên đó:
+- Tạo repo cá nhân trống trên GitHub trước bước 5b. Dùng [lệnh đẩy dự đoán trong README](README.md#đẩy-dự-đoán-trước-sweep-bước-5b) để lưu bằng chứng trước sweep. Khi hoàn thành, đẩy bài nộp lên cùng repo:
 
   ```bash
   git remote set-url origin https://github.com/<tài-khoản>/K5-L23-DAY14-HoVaTen-MSSV-PointPillarsPrelabel.git

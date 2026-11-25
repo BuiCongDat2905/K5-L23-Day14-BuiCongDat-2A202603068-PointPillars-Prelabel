@@ -150,8 +150,8 @@ def main(argv=None) -> int:
     data = Path(args.data)
     names = vf_d14.read_frame_list(args.frames)
     rows = vf_d14.frame_rows(data, names)
+    gt = vf_d14.load_reference(args.gt, data, names, require_all=True) if args.gt else {}
     det = Detector(cfg)
-    gt = vf_d14.load_reference(args.gt, data, names) if args.gt else {}
     results, total = {}, Counter()
     print(f"{'frame':8} {'box':>4}  lớp")
     for row in rows:
