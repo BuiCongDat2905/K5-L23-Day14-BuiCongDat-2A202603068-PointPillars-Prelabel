@@ -29,15 +29,15 @@ workMode: "individual"
 
 # Day 14 Lab — Pre-label 3D bằng PointPillars pre-trained (VF LiDAR)
 
-Bài cá nhân này có **240 phút trên lớp**, cộng khoảng **10 phút chuẩn bị** trước buổi giảng. Bạn chạy PointPillars trên dữ liệu LiDAR 360° của Day 13. Mô hình dùng CPU và mã PyTorch thay cho hai phép toán CUDA, nên máy không cần GPU. Mã PointPillars gốc giữ nguyên tại commit `620e6b0`.
+Bài cá nhân này có **245 phút thực hành**. Bạn dành 45 phút ở cuối buổi lý thuyết sáng (09:00–13:00), gồm 10 phút cài đặt và 35 phút chạy thử. Buổi chiều (16:00–19:30) có 200 phút làm tập A và B. Bạn chạy PointPillars đã huấn luyện trên KITTI trên dữ liệu LiDAR 360° của Day 13. Mô hình dùng CPU và mã PyTorch thay cho hai phép toán CUDA, nên máy không cần GPU. Mã PointPillars gốc giữ nguyên tại commit `620e6b0`.
 
 Tạo cuboid dự đoán, đưa lên CVAT rồi sửa 3 frame tập A để có nhãn tham chiếu. Ghi dự đoán và push báo cáo ở bước 5b trước khi thử nhiều cấu hình. Sau đó dùng cấu hình đã chọn cho 12 frame tập B, sửa nhãn và xuất `ref_B.json`.
 
 Đẩy bài lên repo `K5-L23-DAY14-HoVaTen-MSSV-PointPillarsPrelabel`. Nộp link commit có SHA lên LMS trước **12:00 trưa hôm sau (GMT+7)**. Xem [SUBMISSION.md](SUBMISSION.md) để biết file cần nộp và [RUBRIC.md](RUBRIC.md) để biết cách chấm. Theo dõi tiến độ bằng [CHECKPOINTS.md](CHECKPOINTS.md), đọc [RULES.md](RULES.md) và dùng [mẫu báo cáo cá nhân](report/individual/MSSV_HoTen.md).
 
-## Pha 0 — Chuẩn bị máy, repository và kiểm cài đặt (Trước buổi giảng, ~10 phút)
+## Pha 0 — Chuẩn bị máy, repository và kiểm cài đặt (Buổi lec sáng · 0:00 → 0:10 · 10 phút)
 
-Trước buổi giảng, hãy clone repository chính thức, dựng môi trường ảo Python 3.9+ và tải mã upstream PointPillars cùng weights KITTI (~20 MB). Hoàn tất bước này trước giờ học giúp bạn kiểm tra CPU, PyTorch và đường dẫn `<Data-VF>` (`sequence_01 … sequence_05`) đều sẵn sàng, đồng thời đọc trước [CHECKPOINTS.md](CHECKPOINTS.md) và [RULES.md](RULES.md).
+Ở cuối buổi lý thuyết sáng (trong khung `09:00–13:00`, ngay sau khi giảng xong phần lý thuyết, tùy tiến độ của giảng viên, ví dụ tượng trưng `~12:15 → 12:25`), hãy clone repository chính thức, dựng môi trường ảo Python 3.9+ và tải mã upstream PointPillars cùng weights KITTI (~20 MB). Hoàn tất bước này ngay trên lớp sáng giúp bạn kiểm tra CPU, PyTorch và đường dẫn `<Data-VF>` (`sequence_01 … sequence_05`) đều sẵn sàng cho Pha 1 và buổi chiều, đồng thời đọc trước [CHECKPOINTS.md](CHECKPOINTS.md) và [RULES.md](RULES.md).
 
 :::repository{url="https://github.com/VinUni-AI20k/K5-L23-Day14-PointPillars-Prelabel" label="Repo gốc Day 14 — K5-L23-Day14-PointPillars-Prelabel"}
 - [Repository gốc Day 14](https://github.com/VinUni-AI20k/K5-L23-Day14-PointPillars-Prelabel)
@@ -85,7 +85,7 @@ Build một lần bằng `docker build -t k5-day14-lab .`, sau đó chạy `dock
 - [ ] CVAT 3D (`http://localhost:8080` hoặc server lớp) đăng nhập bình thường.
 :::
 
-## Pha 1 — Buổi giảng: 6 frame chung, hệ trục VF ↔ KITTI và chi phí sửa (0:00 → 0:40 · 40 phút)
+## Pha 1 — Thực hành 6 frame buổi sáng, hệ trục VF ↔ KITTI và chi phí sửa (0:10 → 0:45 · 35 phút)
 
 ### Bản chất vấn đề: vì sao model KITTI không dùng thẳng được trên VF LiDAR?
 
@@ -144,13 +144,13 @@ python pp_prelabel.py --data "<Data-VF>" --frames demo/frames_lec.txt --set scor
 
 ### Checkpoint Pha 1 và chuyển sang buổi chiều
 
-Pha 1 hoàn thành khi bạn đọc được cả hai đầu ra terminal của 6 frame buổi giảng, mở đủ 6 ảnh `out/lec_png/*.jpg` và giải thích được vì sao hệ số phạt `1.0` cho mỗi box bị sót lớn hơn gấp ba lần hệ số `0.3` cho mỗi box thừa. Hiểu rõ quy luật đánh đổi này là nền tảng trực tiếp cho việc sửa tay nhãn tham chiếu tập A ở Pha 2 và đưa ra dự đoán trước khi chạy sweep ở Pha 3.
+Pha 1 hoàn thành khi bạn đọc được cả hai đầu ra terminal của 6 frame buổi sáng, mở đủ 6 ảnh `out/lec_png/*.jpg` và giải thích được vì sao hệ số phạt `1.0` cho mỗi box bị sót lớn hơn gấp ba lần hệ số `0.3` cho mỗi box thừa. Kết thúc **45 phút** thực hành trong buổi lý thuyết sáng (`09:00–13:00`, gồm Pha 0 `10′` + Pha 1 `35′`), bạn sẵn sàng bước vào buổi thực hành chiều (`16:00–19:30`).
 
-## Pha 2 — Lab Tập A (Bước 1–5): Chọn frame theo SEED, pre-label và sửa tay trên CVAT (0:40 → 1:40 · 60 phút)
+## Pha 2 — Lab Buổi chiều Tập A (Bước 1–5): Chọn frame theo SEED, pre-label và sửa tay trên CVAT (0:45 → 1:45 · 60 phút)
 
 ### Bản chất vấn đề: tách tập tune (A) và tập nộp (B) bằng mã học viên + SEED
 
-Ngay khi phần thực hành buổi chiều bắt đầu, giảng viên sẽ công bố một chuỗi `<SEED>` chung cho buổi học. Lệnh `vf_cvat.py day14` kết hợp `<SEED>` với mã học viên `<ID>` qua hàm băm SHA-256 (`d14:<SEED>:<ID>`) để sinh hai danh sách frame hoàn toàn riêng cho từng người: **tập A (`frames_A.txt`) gồm 3 frame** thuộc 3 sequence khác nhau để tinh chỉnh tham số, và **tập B (`frames_B.txt`) gồm 12 frame** trải trên 4 sequence (3 frame mỗi sequence, cách nhau tối thiểu 15 frame) dùng cho bài nộp cuối. Các frame được tự động lọc tránh toàn bộ 6 frame buổi giảng, tránh 10 frame Day 13 của chính bạn, đồng thời mỗi frame tập A luôn cách mọi frame tập B cùng sequence ít nhất 6 chỉ số để tránh rò rỉ dữ liệu khi tinh chỉnh.
+Ngay khi phần thực hành buổi chiều (`16:00–19:30`) bắt đầu, giảng viên sẽ công bố một chuỗi `<SEED>` chung cho buổi học. Lệnh `vf_cvat.py day14` kết hợp `<SEED>` với mã học viên `<ID>` qua hàm băm SHA-256 (`d14:<SEED>:<ID>`) để sinh hai danh sách frame hoàn toàn riêng cho từng người: **tập A (`frames_A.txt`) gồm 3 frame** thuộc 3 sequence khác nhau để tinh chỉnh tham số, và **tập B (`frames_B.txt`) gồm 12 frame** trải trên 4 sequence (3 frame mỗi sequence, cách nhau tối thiểu 15 frame) dùng cho bài nộp cuối. Các frame được tự động lọc tránh toàn bộ 6 frame buổi giảng, tránh 10 frame Day 13 của chính bạn, đồng thời mỗi frame tập A luôn cách mọi frame tập B cùng sequence ít nhất 6 chỉ số để tránh rò rỉ dữ liệu khi tinh chỉnh.
 
 ### Giải nghĩa quy tắc mã học viên có số 0 đầu, BOM và cờ `--org`
 
@@ -239,11 +239,11 @@ python pp_prelabel.py --data "<Data-VF>" --frames "d14_<ID>/frames_A.txt" --gt "
 
 5. **Bước 5.** Chạy `vf_cvat.py reference --task A` để xuất `d14_<ID>/ref_A.json`. Đối chiếu số hộp với **Items** trên CVAT. Nếu server đảo chiều dài và chiều rộng, thêm `--scale-order wlh`. Sau đó dùng `pp_prelabel.py` với `--gt d14_<ID>/ref_A.json` để đo chi phí của cấu hình gốc.
 
-### Checkpoint Pha 2 và giờ nghỉ giải lao (1:40 → 1:50 · 10 phút)
+### Checkpoint Pha 2 và giờ nghỉ giải lao (1:45 → 1:55 · 10 phút)
 
-Trước khi nghỉ, kiểm tra `d14_<ID>/` có `frames_A.txt`, `frames_B.txt`, `pred_A.json` và `ref_A.json`. Kết quả xuất phải khớp số **Items** trên từng frame CVAT. Đọc số hộp cần xóa, thêm và sửa do `pp_prelabel.py` in ra để biết lỗi nào tốn nhiều công nhất với cấu hình gốc. Bạn sẽ dùng các số này và ảnh BEV để viết dự đoán. Trong **10 phút nghỉ (1:40 → 1:50)**, sao chép `report/individual/MSSV_HoTen.md` thành `report/individual/<MSSV>_<HoTen>.md` (không dấu). Bạn sẽ điền và push mục 1 ở bước 5b.
+Trước khi nghỉ, kiểm tra `d14_<ID>/` có `frames_A.txt`, `frames_B.txt`, `pred_A.json` và `ref_A.json`. Kết quả xuất phải khớp số **Items** trên từng frame CVAT. Đọc số hộp cần xóa, thêm và sửa do `pp_prelabel.py` in ra để biết lỗi nào tốn nhiều công nhất với cấu hình gốc. Bạn sẽ dùng các số này và ảnh BEV để viết dự đoán. Trong **10 phút nghỉ (1:45 → 1:55)**, sao chép `report/individual/MSSV_HoTen.md` thành `report/individual/<MSSV>_<HoTen>.md` (không dấu). Bạn sẽ điền và push mục 1 ở bước 5b.
 
-## Pha 3 — Bước 5b, Sweep và So sánh trước/sau trên Tập A (1:50 → 2:20 · 30 phút)
+## Pha 3 — Bước 5b, Sweep và So sánh trước/sau trên Tập A (1:55 → 2:25 · 30 phút)
 
 ### Bản chất vấn đề: commit dự đoán trước khi sweep và rủi ro overfit trên 3 frame
 
@@ -297,7 +297,7 @@ python pp_compare.py --data "<Data-VF>" --frames "d14_<ID>/frames_A.txt" --gt "d
 
 Bạn kết thúc Pha 3 khi lịch sử GitHub đã có commit `"5b: dự đoán"` nằm trước bước chạy sweep, trong `d14_<ID>/` đã có đủ `sweep.csv`, `best_config.json`, bộ ảnh `compare/*.jpg`, và `report/individual/<MSSV>_<HoTen>.md` đã điền xong mục 1, 2 và 3 (kèm nhận định `leave-one-out` và 1 ảnh đối chiếu). Hãy đọc lại mức chênh lệch giữa cấu hình được chọn trên 2 frame còn lại với điểm `oracle` của từng frame trước khi áp dụng `best_config.json` lên 12 frame độc lập của Tập B ở Pha 4.
 
-## Pha 4 — Chạy Tập B (Bước 7, Bước 9), hoàn thiện báo cáo và nộp commit SHA (2:20 → 4:00 · 100 phút)
+## Pha 4 — Chạy Tập B (Bước 7, Bước 9), hoàn thiện báo cáo và nộp commit SHA (2:25 → 4:05 · 100 phút)
 
 ### Bản chất vấn đề: kiểm chứng 12 frame độc lập và chống nộp thẳng box của model
 

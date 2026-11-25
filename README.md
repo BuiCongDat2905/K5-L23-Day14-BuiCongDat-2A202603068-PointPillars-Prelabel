@@ -1,13 +1,13 @@
 # Day 14 — Pre-label 3D bằng PointPillars pre-trained (VF LiDAR)
 
-**Bài cá nhân.** Thời lượng: cài đặt ≈10 phút trước buổi; buổi giảng sáng; lab buổi chiều. Nộp link commit GitHub (có SHA) lên LMS trước **12:00 trưa hôm sau** (GMT+7).
+**Bài cá nhân.** Cuối buổi lý thuyết sáng, bạn có 10 phút cài đặt và 35 phút chạy thử. Buổi chiều, bạn làm tập A và B. Nộp link commit GitHub (có SHA) lên LMS trước **12:00 trưa hôm sau** (GMT+7).
 
 Tài liệu: [SUBMISSION.md](SUBMISSION.md) (nộp gì, nộp ở đâu) · [RUBRIC.md](RUBRIC.md) (chấm điểm) · [CHECKPOINTS.md](CHECKPOINTS.md) (tự kiểm từng bước) · [RULES.md](RULES.md) (quy định) · [report/individual/MSSV_HoTen.md](report/individual/MSSV_HoTen.md) (template báo cáo)
 
 Chạy mô hình PointPillars đã huấn luyện trên KITTI ([zhulf0804/PointPillars](https://github.com/zhulf0804/PointPillars), MIT, commit `620e6b0`) trên dữ liệu VF của Day 13. Mô hình tạo cuboid dự đoán để bạn sửa trực tiếp trên CVAT. Bạn sẽ thử nhiều cấu hình trên tập A (sweep), rồi dùng cấu hình đã chọn cho tập B.
 Code chạy bằng PyTorch trên CPU, không cần GPU và không cần biên dịch: hai op CUDA của upstream (voxelize, rotated NMS) được thay bằng bản Python thuần trong `vf_pp/upstream.py`. File của upstream giữ nguyên, không sửa dòng nào.
 
-## 0. Cài trước buổi giảng (≈10 phút)
+## 0. Cài đặt cuối buổi lý thuyết sáng (10 phút)
 
 **Windows (PowerShell):**
 
