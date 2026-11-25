@@ -33,7 +33,12 @@ class TestStudentGuideDeliverables(unittest.TestCase):
     WALKTHROUGH_DIR = REPO_ROOT / "walkthrough_images"
 
     def _assert_clean_student_text(self, text: str, label: str) -> None:
-        stripped_org = re.sub(r"VinUni-AI20k", "", text, flags=re.IGNORECASE)
+        without_data_uris = re.sub(
+            r"data:image/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+",
+            "",
+            text,
+        )
+        stripped_org = re.sub(r"VinUni-AI20k", "", without_data_uris, flags=re.IGNORECASE)
         for forbidden in (
             "ai20k",
             "coachonly",
@@ -57,7 +62,7 @@ class TestStudentGuideDeliverables(unittest.TestCase):
             r"seed_tag=[0-9a-fA-F]{6,}",
             r"ghp_[A-Za-z0-9]{20,}",
         ):
-            self.assertIsNone(re.search(pat, text), f"Secret/SEED pattern {pat!r} matched in {label}")
+            self.assertIsNone(re.search(pat, without_data_uris), f"Secret/SEED pattern {pat!r} matched in {label}")
 
     def test_student_markdown_contract_widgets_and_images(self) -> None:
         self.assertTrue(self.STUDENT_MD.is_file(), "Missing student Markdown guide")
@@ -117,10 +122,14 @@ class TestStudentGuideDeliverables(unittest.TestCase):
             "exit 137",
             "host.docker.internal:8080",
             "key=vals",
+            "09:00–13:00",
+            "16:00–19:30",
+            "45 phút",
         ):
             self.assertIn(required, text)
         self.assertNotIn("K5-DAY14-HoVaTen-MSSV", text)
         self.assertNotIn("Khác với trước đây", text)
+        self.assertNotIn("Trước buổi giảng", text)
 
     def test_student_markdown_step_depth_and_reader_blocks_budgets(self) -> None:
         text = self.STUDENT_MD.read_text(encoding="utf-8")
@@ -182,7 +191,7 @@ class TestStudentGuideDeliverables(unittest.TestCase):
         self.assertNotIn("fonts.googleapis.com", html)
 
         for token in (
-            "const TOTAL = 240;",
+            "const TOTAL = 245;",
             'id="bStart"',
             'id="bViewAll"',
             'id="bTheme"',
@@ -205,9 +214,10 @@ class TestStudentGuideDeliverables(unittest.TestCase):
         for cm_inner in re.findall(r'<pre><span class="cm">([^<]*)</span>', archive_html):
             self.assertTrue(cm_inner.endswith("\n"), f"Missing trailing newline in comment span: {cm_inner!r}")
 
-        # Every subToc target and title must match deepArchive and duration sum must equal 240
+        # Every subToc target and title must match deepArchive and duration sum must equal 245 (45m morning + 200m afternoon)
         phases = json.loads(re.search(r"const PHASES = (\[.*?\]);", html, re.S).group(1))
-        self.assertEqual(sum(p["dur"] for p in phases), 240)
+        self.assertEqual(sum(p["dur"] for p in phases), 245)
+        self.assertEqual([p["dur"] for p in phases], [10, 35, 60, 10, 30, 100])
         h4_titles = {
             hid: re.sub(r"<[^>]+>", "", htext)
             for hid, htext in re.findall(r'<h4 id="([^"]+)"[^>]*>(.*?)</h4>', html, re.S)
@@ -223,11 +233,29 @@ class TestStudentGuideDeliverables(unittest.TestCase):
             self.assertIn('class="lab-figure"', fig, f"Figure #{idx} missing lab-figure class")
             self.assertIn('onclick="openLightbox(this)"', fig, f"Figure #{idx} missing openLightbox handler")
 
-        imgs_html = re.findall(r'<img src="(walkthrough_images/[^"]+)"', html)
-        imgs_disk = sorted(p.relative_to(REPO_ROOT).as_posix() for p in self.WALKTHROUGH_DIR.iterdir() if p.is_file())
-        for src in imgs_html:
-            self.assertTrue((REPO_ROOT / src).is_file(), f"Missing image referenced in HTML: {src}")
-        self.assertEqual(set(imgs_html), set(imgs_disk), "Orphan or unreferenced walkthrough_images in HTML")
+        self.assertNotIn('src="walkthrough_images/', html)
+        import base64
+        import hashlib
+
+        imgs_b64 = re.findall(
+            r'<figure class="lab-figure"><img src="data:image/(jpeg|png);base64,([A-Za-z0-9+/=]+)"',
+            html,
+        )
+        self.assertEqual(len(imgs_b64), 16)
+        disk_hashes = {
+            hashlib.sha256(p.read_bytes()).hexdigest()
+            for p in self.WALKTHROUGH_DIR.iterdir()
+            if p.is_file()
+        }
+        html_hashes = set()
+        for mime_sub, payload in imgs_b64:
+            raw = base64.b64decode(payload, validate=True)
+            if mime_sub == "png":
+                self.assertTrue(raw.startswith(b"\x89PNG\r\n\x1a\n"))
+            else:
+                self.assertTrue(raw.startswith(b"\xff\xd8\xff"))
+            html_hashes.add(hashlib.sha256(raw).hexdigest())
+        self.assertEqual(html_hashes, disk_hashes, "Embedded HTML images do not match walkthrough_images/")
 
         for required in (
             "K5-L23-DAY14-HoVaTen-MSSV-PointPillarsPrelabel",
@@ -240,10 +268,16 @@ class TestStudentGuideDeliverables(unittest.TestCase):
             "5b: dự đoán",
             "git rev-parse HEAD",
             "12:00",
+            "09:00–13:00",
+            "16:00–19:30",
         ):
             self.assertIn(required, html)
         self.assertNotIn("K5-DAY14-HoVaTen-MSSV", html)
         self.assertNotIn("Khác với trước đây", html)
+        self.assertNotIn("Trước buổi giảng", html)
+        self.assertNotIn("sau 09:00", html)
+        self.assertNotIn("sau lý thuyết", html)
+        self.assertNotIn("Đồng hồ:", html)
 
     def test_submission_docs_gitignore_and_readme_sync(self) -> None:
         for rel in (
@@ -313,10 +347,14 @@ class TestStudentGuideDeliverables(unittest.TestCase):
             "git rev-parse HEAD",
             "d14_*/png_*/",
             "12:00",
+            "09:00–13:00",
+            "16:00–19:30",
         ):
             self.assertIn(required, full_text)
         self.assertNotIn("K5-DAY14-HoVaTen-MSSV", full_text)
         self.assertNotIn("Khác với trước đây", full_text)
+        self.assertNotIn("240 phút", full_text)
+        self.assertNotIn("Trước buổi giảng", full_text)
 
 
 if __name__ == "__main__":
