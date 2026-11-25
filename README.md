@@ -7,6 +7,8 @@ Tài liệu: [SUBMISSION.md](SUBMISSION.md) (nộp gì, nộp ở đâu) · [RUB
 Chạy mô hình PointPillars đã huấn luyện trên KITTI ([zhulf0804/PointPillars](https://github.com/zhulf0804/PointPillars), MIT, commit `620e6b0`) trên dữ liệu VF của Day 13. Mô hình tạo cuboid dự đoán để bạn sửa trực tiếp trên CVAT. Bạn sẽ thử nhiều cấu hình trên tập A (sweep), rồi dùng cấu hình đã chọn cho tập B.
 Code chạy bằng PyTorch trên CPU, không cần GPU và không cần biên dịch: hai op CUDA của upstream (voxelize, rotated NMS) được thay bằng bản Python thuần trong `vf_pp/upstream.py`. File của upstream giữ nguyên, không sửa dòng nào.
 
+Chạy các lệnh từ gốc repo. Các công cụ dòng lệnh của lab nằm trong thư mục `scripts/`.
+
 ## 0. Cài đặt cuối buổi lý thuyết sáng (10 phút)
 
 **Windows (PowerShell):**
@@ -20,9 +22,9 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 $env:PYTHONUTF8 = "1"
 pip install torch --index-url https://download.pytorch.org/whl/cpu
 pip install -r requirements.txt
-python setup_pp.py                    # tải code upstream + weights (~20 MB); không có git: python setup_pp.py --download-zip
+python scripts/setup_pp.py                    # tải code upstream + weights (~20 MB); không có git: python scripts/setup_pp.py --download-zip
 $DataVF = "C:\duong-dan\Data-VF"
-python pp_selftest.py --data "$DataVF"
+python scripts/pp_selftest.py --data "$DataVF"
 ```
 
 **macOS / Linux (bash/zsh):**
@@ -32,17 +34,17 @@ git clone https://github.com/VinUni-AI20k/K5-L23-Day14-PointPillars-Prelabel.git
 python -m venv .venv && source .venv/bin/activate
 pip install torch --index-url https://download.pytorch.org/whl/cpu
 pip install -r requirements.txt
-python setup_pp.py                    # tải code upstream + weights (~20 MB); không có git: python setup_pp.py --download-zip
+python scripts/setup_pp.py                    # tải code upstream + weights (~20 MB); không có git: python scripts/setup_pp.py --download-zip
 DataVF="/duong-dan/Data-VF"
-python pp_selftest.py --data "$DataVF"
+python scripts/pp_selftest.py --data "$DataVF"
 ```
 Đặt `DataVF` thành đường dẫn thực tế tới thư mục VF từ Day 13. Thư mục này phải chứa trực tiếp `sequence_01` đến `sequence_05`, mỗi sequence có đủ 60 frame LiDAR. Khi mở terminal mới, đặt lại biến trước khi chạy lệnh. Selftest in `TẤT CẢ OK` khi cài đặt thành công. Nếu dùng Docker, xem hướng dẫn trong `Dockerfile`.
 
 ## 1. Buổi giảng: 6 frame chung (mọi người giống nhau)
 
 ```bash
-python pp_prelabel.py --data "$DataVF" --frames demo/frames_lec.txt --out out/lec.json --plot out/lec_png
-python pp_prelabel.py --data "$DataVF" --frames demo/frames_lec.txt --set score_thr=0.4 --set min_points=5
+python scripts/pp_prelabel.py --data "$DataVF" --frames demo/frames_lec.txt --out out/lec.json --plot out/lec_png
+python scripts/pp_prelabel.py --data "$DataVF" --frames demo/frames_lec.txt --set score_thr=0.4 --set min_points=5
 ```
 Mở ảnh trong `out/lec_png/`. Mỗi ảnh ghép 7 góc camera và hình nhìn từ trên xuống (BEV). Tìm vật thể được nhận diện đúng, vật thể bị sót và cuboid bị vẽ thừa.
 
@@ -52,15 +54,15 @@ SEED **chỉ được coach công bố lúc bắt đầu lab**. Thay `<ID>`, `<S
 
 | Bước | Lệnh | Kết quả |
 |---|---|---|
-| 1. Chọn frame | `python vf_cvat.py day14 --student "<ID>" --seed "<SEED>" --data "$DataVF"` | `d14_<ID>/frames_A.txt` (3 frame tune), `frames_B.txt` (12 frame nộp) |
-| 2. Pre-label A | `python pp_prelabel.py --data "$DataVF" --frames "d14_<ID>/frames_A.txt" --out "d14_<ID>/pred_A.json" --plot "d14_<ID>/png_A"` | box của cấu hình gốc + ảnh để xem |
-| 3. Lên CVAT | `python vf_cvat.py prelabel --student "<ID>" --task A --data "$DataVF" --boxes "d14_<ID>/pred_A.json" --host "<URL>" --user "<tên>"` | task `D14-<ID>-A` có sẵn cuboid (thuộc tính `pp_id`, `score`, `warn`, `note`) |
+| 1. Chọn frame | `python scripts/vf_cvat.py day14 --student "<ID>" --seed "<SEED>" --data "$DataVF"` | `d14_<ID>/frames_A.txt` (3 frame tune), `frames_B.txt` (12 frame nộp) |
+| 2. Pre-label A | `python scripts/pp_prelabel.py --data "$DataVF" --frames "d14_<ID>/frames_A.txt" --out "d14_<ID>/pred_A.json" --plot "d14_<ID>/png_A"` | box của cấu hình gốc + ảnh để xem |
+| 3. Lên CVAT | `python scripts/vf_cvat.py prelabel --student "<ID>" --task A --data "$DataVF" --boxes "d14_<ID>/pred_A.json" --host "<URL>" --user "<tên>"` | task `D14-<ID>-A` có sẵn cuboid (thuộc tính `pp_id`, `score`, `warn`, `note`) |
 | 4. Sửa tay A | Mở từng frame trên CVAT. Xóa hộp thừa, thêm hộp bị sót và chỉnh hộp sai theo hướng dẫn Day 13. Khi vẽ hộp mới, chọn **Shape**. Bấm **Save**. | nhãn tham chiếu của bạn |
-| 5. Lấy tham chiếu | `python vf_cvat.py reference --student "<ID>" --task A --host "<URL>" --user "<tên>"` | `d14_<ID>/ref_A.json` |
+| 5. Lấy tham chiếu | `python scripts/vf_cvat.py reference --student "<ID>" --task A --host "<URL>" --user "<tên>"` | `d14_<ID>/ref_A.json` |
 | 5b. Dự đoán trước sweep | Làm theo [lệnh ghi và đẩy dự đoán](#đẩy-dự-đoán-trước-sweep-bước-5b). | Mục 1 báo cáo đã được push, làm bằng chứng khi đối chiếu ở bước 8 |
-| 6. Tune | `python pp_sweep.py --data "$DataVF" --frames "d14_<ID>/frames_A.txt" --gt "d14_<ID>/ref_A.json" --grid score_thr=0.1,0.2,0.3,0.4,0.5 --grid min_points=0,5,10 --out "d14_<ID>/sweep.csv"` | `sweep.csv`, `best_config.json`, top 10, leave-one-out |
-| 7. Pre-label B | `python pp_prelabel.py --data "$DataVF" --frames "d14_<ID>/frames_B.txt" --config "d14_<ID>/best_config.json" --out "d14_<ID>/pred_B.json"` rồi `python vf_cvat.py prelabel --student "<ID>" --task B --data "$DataVF" --boxes "d14_<ID>/pred_B.json" --host "<URL>" --user "<tên>"` | task `D14-<ID>-B` để sửa đủ 12 frame trên CVAT (**chọn `Shape`, KHÔNG chọn `Track`**) |
-| 8. Trước/sau | `python pp_compare.py --data "$DataVF" --frames "d14_<ID>/frames_A.txt" --gt "d14_<ID>/ref_A.json" --tuned "d14_<ID>/best_config.json" --out "d14_<ID>/compare"` | Mức thay đổi chi phí sửa và ảnh so sánh từng frame. Đưa một ảnh vào báo cáo và giải thích vì sao kết quả khớp hoặc lệch dự đoán ở bước 5b. |
+| 6. Tune | `python scripts/pp_sweep.py --data "$DataVF" --frames "d14_<ID>/frames_A.txt" --gt "d14_<ID>/ref_A.json" --grid score_thr=0.1,0.2,0.3,0.4,0.5 --grid min_points=0,5,10 --out "d14_<ID>/sweep.csv"` | `sweep.csv`, `best_config.json`, top 10, leave-one-out |
+| 7. Pre-label B | `python scripts/pp_prelabel.py --data "$DataVF" --frames "d14_<ID>/frames_B.txt" --config "d14_<ID>/best_config.json" --out "d14_<ID>/pred_B.json"` rồi `python scripts/vf_cvat.py prelabel --student "<ID>" --task B --data "$DataVF" --boxes "d14_<ID>/pred_B.json" --host "<URL>" --user "<tên>"` | task `D14-<ID>-B` để sửa đủ 12 frame trên CVAT (**chọn `Shape`, KHÔNG chọn `Track`**) |
+| 8. Trước/sau | `python scripts/pp_compare.py --data "$DataVF" --frames "d14_<ID>/frames_A.txt" --gt "d14_<ID>/ref_A.json" --tuned "d14_<ID>/best_config.json" --out "d14_<ID>/compare"` | Mức thay đổi chi phí sửa và ảnh so sánh từng frame. Đưa một ảnh vào báo cáo và giải thích vì sao kết quả khớp hoặc lệch dự đoán ở bước 5b. |
 | 9. Xuất nhãn B, nộp | Làm theo [bước 9 bên dưới](#xuất-nhãn-và-đo-công-sửa-tập-b-bước-9). | `d14_<ID>/ref_B.json` và số đo cho mục 4 báo cáo |
 
 ### Đẩy dự đoán trước sweep (bước 5b)
@@ -79,13 +81,13 @@ git push -u origin main
 Sửa đủ 12 frame trên CVAT và bấm **Save**. Xuất nhãn đã sửa bằng lệnh sau.
 
 ```bash
-python vf_cvat.py reference --student "<ID>" --task B --host "<URL>" --user "<tên>"
+python scripts/vf_cvat.py reference --student "<ID>" --task B --host "<URL>" --user "<tên>"
 ```
 
 Chỉ chạy lệnh đo sau khi lệnh xuất in **Đã ghi**. Nếu lệnh xuất báo lỗi, xử lý lỗi ngay để tránh đo bằng bản nhãn cũ.
 
 ```bash
-python pp_prelabel.py --data "$DataVF" --frames "d14_<ID>/frames_B.txt" --config "d14_<ID>/best_config.json" --gt "d14_<ID>/ref_B.json"
+python scripts/pp_prelabel.py --data "$DataVF" --frames "d14_<ID>/frames_B.txt" --config "d14_<ID>/best_config.json" --gt "d14_<ID>/ref_B.json"
 ```
 
 Ghi số hộp cần xóa, thêm và sửa vào mục 4 báo cáo, rồi làm theo [hướng dẫn nộp bài](SUBMISSION.md).
@@ -127,7 +129,7 @@ Sau khi nộp xong phần bắt buộc, xem [`bonus/README.md`](bonus/README.md)
 ## 5. Lưu ý trung thực khi báo cáo
 
 - Model học trên KITTI (LiDAR 64 tia, chỉ phía trước, 3 lớp). Trên VF nó bỏ sót nhiều Pedestrian/Cyclist và không biết Truck/Bus. Pre-label là để **giảm** công sửa, không thay người gán nhãn.
-- 3 frame tune là ít. Hãy đọc phần leave-one-out của `pp_sweep.py` trước khi tin cấu hình "tốt nhất".
+- 3 frame tune là ít. Hãy đọc phần leave-one-out của `scripts/pp_sweep.py` trước khi tin cấu hình "tốt nhất".
 - Mọi box nộp phải được người kiểm. Không nộp thẳng box của model.
 
 ## Góp ý bài lab (30 giây)

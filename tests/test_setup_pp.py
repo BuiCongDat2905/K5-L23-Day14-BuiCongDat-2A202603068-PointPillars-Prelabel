@@ -14,7 +14,7 @@ from unittest import mock
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-import setup_pp  # noqa: E402
+from scripts import setup_pp  # noqa: E402
 
 
 def _make_writable_tree(root: Path) -> None:

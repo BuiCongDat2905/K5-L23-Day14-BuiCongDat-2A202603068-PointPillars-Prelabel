@@ -7,7 +7,7 @@
 
 ## 1. Dự đoán trước sweep (bước 5b)
 
-Ghi **trước** khi chạy `pp_sweep.py`, rồi commit và push ngay (lịch sử commit là bằng chứng thời điểm viết). Không sửa phần này sau khi có kết quả.
+Ghi **trước** khi chạy `scripts/pp_sweep.py`, rồi commit và push ngay (lịch sử commit là bằng chứng thời điểm viết). Không sửa phần này sau khi có kết quả.
 
 - Tham số tôi nghĩ giảm công sửa nhiều nhất: ...
 - Vì sao (nhìn ảnh BEV tập A: box thừa nhiều hay box sót nhiều?): ...
@@ -20,19 +20,19 @@ Ghi **trước** khi chạy `pp_sweep.py`, rồi commit và push ngay (lịch s�
 | `best_config.json` | | | | |
 
 - Tham số đã đổi trong `best_config.json`: ...
-- Kết quả leave-one-out (dán các dòng `pp_sweep.py` in ra): ...
+- Kết quả leave-one-out (dán các dòng `scripts/pp_sweep.py` in ra): ...
 - Cấu hình có ổn định trên từng frame không? Vì sao tôi vẫn chọn (hoặc không chọn) nó: ...
 
 ## 3. Trước/sau (bước 8)
 
 ![so sánh](../../d14_<ID>/compare/<frame>.jpg)
 
-- `pp_compare.py` báo giảm (hoặc tăng) ...% công sửa trên tập A.
+- `scripts/pp_compare.py` báo giảm (hoặc tăng) ...% công sửa trên tập A.
 - Dự đoán ở mục 1 đúng hay sai? Giải thích bằng số box xóa/thêm/sửa: ...
 
 ## 4. Tập B
 
-Số đo từ `pp_prelabel.py --frames d14_<ID>/frames_B.txt --config d14_<ID>/best_config.json --gt d14_<ID>/ref_B.json`:
+Số đo từ `scripts/pp_prelabel.py --frames d14_<ID>/frames_B.txt --config d14_<ID>/best_config.json --gt d14_<ID>/ref_B.json`:
 
 | Xóa | Thêm | Sửa | Chi phí |
 |---:|---:|---:|---:|

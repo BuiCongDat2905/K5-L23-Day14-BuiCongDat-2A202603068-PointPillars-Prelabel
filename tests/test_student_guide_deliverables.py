@@ -320,6 +320,12 @@ class TestStudentGuideDeliverables(unittest.TestCase):
         self.assertNotIn("K5-DAY14-HoVaTen-MSSV", readme)
         self.assertNotIn("## 6. Nộp bài", readme)
 
+    def test_guides_use_the_script_paths(self) -> None:
+        stale_command = r"\bpython\s+(?:/lab/)?(?:setup_pp|pp_selftest|pp_prelabel|pp_sweep|pp_compare|vf_cvat)\.py"
+        for path in (REPO_ROOT / "README.md", self.STUDENT_MD, self.STUDENT_HTML, REPO_ROOT / "Dockerfile"):
+            with self.subTest(path=path.name):
+                self.assertNotRegex(path.read_text(encoding="utf-8"), stale_command)
+
     def test_student_pdf_exists_and_is_valid_a4(self) -> None:
         self.assertTrue(self.STUDENT_PDF.is_file(), "Missing student PDF guide")
         raw = self.STUDENT_PDF.read_bytes()

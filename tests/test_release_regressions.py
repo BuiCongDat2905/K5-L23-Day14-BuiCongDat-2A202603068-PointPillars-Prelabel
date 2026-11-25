@@ -9,8 +9,8 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
 
-import vf_cvat
-import vf_d14
+from scripts import vf_cvat
+from scripts import vf_d14
 
 
 class TestDay14ReleaseRegressions(unittest.TestCase):
@@ -25,8 +25,8 @@ class TestDay14ReleaseRegressions(unittest.TestCase):
             args = SimpleNamespace(student="QA14001", seed="QA-SEED", data=tmp)
             for sequences, bad_sequence in cases:
                 with self.subTest(sequence=bad_sequence):
-                    with mock.patch("vf_common.list_sequences", return_value=sequences), \
-                         mock.patch("vf_cvat.d14_dir", return_value=output):
+                    with mock.patch("scripts.vf_common.list_sequences", return_value=sequences), \
+                         mock.patch("scripts.vf_cvat.d14_dir", return_value=output):
                         with self.assertRaisesRegex(SystemExit, bad_sequence):
                             vf_cvat.cmd_day14(args)
                     self.assertFalse(output.exists())
@@ -63,10 +63,10 @@ class TestDay14ReleaseRegressions(unittest.TestCase):
                     task.get_jobs.return_value = jobs
                     task.get_meta.return_value = SimpleNamespace(frames=frames)
                     task.get_annotations.return_value = SimpleNamespace(shapes=shapes, tracks=[])
-                    with mock.patch("vf_d14.frame_rows", return_value=[{"name": "s01f00"}]), \
-                         mock.patch("vf_cvat.connect"), \
-                         mock.patch("vf_cvat.find_tasks", return_value=[task]), \
-                         mock.patch("vf_cvat.build_bundle") as bundle:
+                    with mock.patch("scripts.vf_d14.frame_rows", return_value=[{"name": "s01f00"}]), \
+                         mock.patch("scripts.vf_cvat.connect"), \
+                         mock.patch("scripts.vf_cvat.find_tasks", return_value=[task]), \
+                         mock.patch("scripts.vf_cvat.build_bundle") as bundle:
                         with self.assertRaisesRegex(SystemExit, message):
                             vf_cvat.cmd_prelabel(args)
                         bundle.assert_not_called()

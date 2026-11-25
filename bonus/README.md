@@ -18,7 +18,7 @@ Log gốc của CVAT chỉ ghi click vào nút. Nó không ghi click trên vùng
 |---|---|---|
 | Cơ bản | Bảng metric của phiên sửa tập B (số click, số phím tắt, độ dài phiên) và ghi chú đã sửa bao nhiêu box | +3 |
 | Khá | Thêm khoảng thời gian và khoảng cách giữa các click, phân tích phím tắt nào dùng nhiều, ghi theo từng frame (một phiên cho mỗi frame) | +5 |
-| Wow | Đối chiếu với số xóa/thêm/sửa do `pp_prelabel.py --gt` in ra. Ví dụ: thêm một box tốn bao nhiêu click hoặc giây so với sửa một box? Trọng số 0.3/1/0.5 có hợp lý không, nên đổi thành bao nhiêu? Phải nêu rõ giới hạn của dữ liệu | +7 |
+| Wow | Đối chiếu với số xóa/thêm/sửa do `scripts/pp_prelabel.py --gt` in ra. Ví dụ: thêm một box tốn bao nhiêu click hoặc giây so với sửa một box? Trọng số 0.3/1/0.5 có hợp lý không, nên đổi thành bao nhiêu? Phải nêu rõ giới hạn của dữ liệu | +7 |
 
 **Ràng buộc:**
 - Metric thao tác không tính vào điểm chính. Không có lợi gì khi cố click ít hơn cho đẹp số.
@@ -28,7 +28,7 @@ Log gốc của CVAT chỉ ghi click vào nút. Nó không ghi click trên vùng
 
 ## Hướng 2 (thử thách mở, tối đa +3): model 3D trong CVAT
 
-Lệnh `vf_cvat.py prelabel` đã đẩy pre-label vào CVAT, và đó là phần bắt buộc, không tính điểm cộng. Thử thách ở đây là chạy PointPillars **bên trong** CVAT dưới dạng serverless function (Nuclio), để CVAT tự sinh cuboid.
+Lệnh `scripts/vf_cvat.py prelabel` đã đẩy pre-label vào CVAT, và đó là phần bắt buộc, không tính điểm cộng. Thử thách ở đây là chạy PointPillars **bên trong** CVAT dưới dạng serverless function (Nuclio), để CVAT tự sinh cuboid.
 
 - Hướng dẫn từng bước: mở [`huong-dan-model-3d.html`](huong-dan-model-3d.html) bằng trình duyệt.
 - Dùng chính CVAT Docker bạn đang chạy, chỉ cần chạy lại kèm `-f components/serverless/docker-compose.serverless.yml` để có Nuclio.

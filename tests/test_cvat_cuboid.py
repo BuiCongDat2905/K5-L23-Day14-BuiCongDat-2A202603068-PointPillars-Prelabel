@@ -14,9 +14,9 @@ from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-import vf_common as vf  # noqa: E402
-import vf_cvat  # noqa: E402
-from vf_cvat import cuboid_points  # noqa: E402
+from scripts import vf_common as vf  # noqa: E402
+from scripts import vf_cvat  # noqa: E402
+from scripts.vf_cvat import cuboid_points  # noqa: E402
 
 
 class TestCvatCuboid(unittest.TestCase):
@@ -97,8 +97,8 @@ class TestCvatSafety(unittest.TestCase):
                 out=str(out_path),
                 scale_order="lwh",
             )
-            with mock.patch("vf_cvat.connect", return_value=SimpleNamespace()), \
-                 mock.patch("vf_cvat.find_tasks", return_value=[task]), \
+            with mock.patch("scripts.vf_cvat.connect", return_value=SimpleNamespace()), \
+                 mock.patch("scripts.vf_cvat.find_tasks", return_value=[task]), \
                  contextlib.redirect_stdout(io.StringIO()):
                 with self.assertRaises(SystemExit) as ctx:
                     vf_cvat.cmd_reference(args)
@@ -114,7 +114,7 @@ class TestCvatSafety(unittest.TestCase):
             args = SimpleNamespace(student="STU01", task="B", host="http://localhost:8080",
                                    user="alice", org=None, out=str(out_path), scale_order="lwh")
             tasks = [mock.Mock(id=11), mock.Mock(id=12)]
-            with mock.patch("vf_cvat.connect"), mock.patch("vf_cvat.find_tasks", return_value=tasks):
+            with mock.patch("scripts.vf_cvat.connect"), mock.patch("scripts.vf_cvat.find_tasks", return_value=tasks):
                 with self.assertRaisesRegex(SystemExit, r"D14-STU01-B.*11, 12"):
                     vf_cvat.cmd_reference(args)
             for task in tasks:
@@ -178,9 +178,9 @@ class TestCvatSafety(unittest.TestCase):
             task = mock.Mock(id=42)
             task.get_jobs.return_value = [object()]
             task.get_meta.return_value = SimpleNamespace(frames=[SimpleNamespace(name="pointcloud/s01f00.pcd")])
-            with mock.patch("vf_cvat.connect", return_value=SimpleNamespace()) as m_connect, \
-                 mock.patch("vf_cvat.find_tasks", return_value=[task]) as m_find, \
-                 mock.patch("vf_cvat.build_bundle", wraps=vf_cvat.build_bundle) as m_bundle, \
+            with mock.patch("scripts.vf_cvat.connect", return_value=SimpleNamespace()) as m_connect, \
+                 mock.patch("scripts.vf_cvat.find_tasks", return_value=[task]) as m_find, \
+                 mock.patch("scripts.vf_cvat.build_bundle", wraps=vf_cvat.build_bundle) as m_bundle, \
                  contextlib.redirect_stdout(io.StringIO()):
                 rc = vf_cvat.cmd_prelabel(args)
             self.assertEqual(rc, 0)
@@ -204,10 +204,10 @@ class TestCvatSafety(unittest.TestCase):
             doc = {"meta": {"config": {"score_thr": 0.1}}, "frames": {"s01f00": [{"label": "Car"}]}}
             prediction.write_text(json.dumps(doc), encoding="utf-8")
             state = Path(tmp) / "state"
-            with mock.patch("vf_cvat.connect", return_value=client), \
-                 mock.patch("vf_cvat.find_tasks", side_effect=[[], [task], [task], [task]]), \
-                 mock.patch("vf_cvat.PRELABEL_STATE", state, create=True), \
-                 mock.patch("vf_cvat.upload_prelabels") as upload, \
+            with mock.patch("scripts.vf_cvat.connect", return_value=client), \
+                 mock.patch("scripts.vf_cvat.find_tasks", side_effect=[[], [task], [task], [task]]), \
+                 mock.patch("scripts.vf_cvat.PRELABEL_STATE", state, create=True), \
+                 mock.patch("scripts.vf_cvat.upload_prelabels") as upload, \
                  contextlib.redirect_stdout(io.StringIO()):
                 self.assertEqual(vf_cvat.cmd_prelabel(args), 0)
                 prediction.write_text(json.dumps(doc, sort_keys=True, indent=2), encoding="utf-8-sig")
@@ -216,7 +216,7 @@ class TestCvatSafety(unittest.TestCase):
                 prediction.write_text(json.dumps(doc), encoding="utf-8")
                 with self.assertRaisesRegex(SystemExit, "file dự đoán.*đã đổi"):
                     vf_cvat.cmd_prelabel(args)
-                with mock.patch("vf_cvat.PRELABEL_STATE", Path(tmp) / "legacy", create=True), \
+                with mock.patch("scripts.vf_cvat.PRELABEL_STATE", Path(tmp) / "legacy", create=True), \
                      contextlib.redirect_stderr(io.StringIO()) as warning:
                     self.assertEqual(vf_cvat.cmd_prelabel(args), 0)
                 self.assertIn("chưa thể đối chiếu", warning.getvalue())
@@ -240,7 +240,7 @@ class TestCvatSafety(unittest.TestCase):
                 dry_run=False,
                 replace=False,
             )
-            with mock.patch("vf_cvat.build_bundle", wraps=vf_cvat.build_bundle) as m_bundle, \
+            with mock.patch("scripts.vf_cvat.build_bundle", wraps=vf_cvat.build_bundle) as m_bundle, \
                  contextlib.redirect_stdout(io.StringIO()):
                 with self.assertRaises(SystemExit):
                     vf_cvat.cmd_prelabel(args)
@@ -263,9 +263,9 @@ class TestCvatSafety(unittest.TestCase):
                 dry_run=True,
                 replace=False,
             )
-            with mock.patch("vf_cvat.connect") as m_connect, \
-                 mock.patch("vf_cvat.find_tasks") as m_find, \
-                 mock.patch("vf_cvat.build_bundle", wraps=vf_cvat.build_bundle) as m_bundle, \
+            with mock.patch("scripts.vf_cvat.connect") as m_connect, \
+                 mock.patch("scripts.vf_cvat.find_tasks") as m_find, \
+                 mock.patch("scripts.vf_cvat.build_bundle", wraps=vf_cvat.build_bundle) as m_bundle, \
                  contextlib.redirect_stdout(io.StringIO()):
                 rc = vf_cvat.cmd_prelabel(args)
             self.assertEqual(rc, 0)

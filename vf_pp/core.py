@@ -263,7 +263,7 @@ def correction_cost(gt: list[dict], pred: list[dict], min_iou: float = 0.3,
     than ``size_tol`` m. Only boxes within ``MAX_RANGE`` m count. Heading is compared modulo pi (front/back flips are edits
     only through the class/position checks, as CVAT users fix them with one key).
     """
-    from vf_common import match_boxes  # shared with the Day 13 grader
+    from scripts.vf_common import match_boxes  # shared with the Day 13 grader
 
     gt, pred = within_range(gt), within_range(pred)
     pairs = match_boxes(gt, pred, min_iou)

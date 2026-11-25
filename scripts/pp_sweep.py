@@ -1,6 +1,6 @@
 """Grid-search the pre-label config on your tuning frames (set A) against ref_A.json.
 
-    python pp_sweep.py --data <Data-VF> --frames d14_<ID>/frames_A.txt --gt d14_<ID>/ref_A.json \
+    python scripts/pp_sweep.py --data <Data-VF> --frames d14_<ID>/frames_A.txt --gt d14_<ID>/ref_A.json \
         --grid score_thr=0.1,0.2,0.3,0.4 --grid min_points=0,5,10 --grid range_m=40,50 --out d14_<ID>/sweep.csv
 
 Model inference reruns only when a group-A/B input knob changes; group-C knobs
@@ -20,12 +20,13 @@ import warnings
 from dataclasses import replace
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+if not __package__:
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 warnings.filterwarnings("ignore", message="torch.meshgrid")
 
-import vf_common as vf  # noqa: E402
-import vf_d14  # noqa: E402
-from pp_prelabel import apply_overrides, load_config  # noqa: E402
+from scripts import vf_common as vf  # noqa: E402
+from scripts import vf_d14  # noqa: E402
+from scripts.pp_prelabel import apply_overrides, load_config  # noqa: E402
 from vf_pp.core import Config, Detector, correction_cost, postprocess  # noqa: E402
 
 MODEL_KNOBS = {"voxel_size", "intensity_mode", "intensity_scale", "ground_mode", "delta_z", "passes",
