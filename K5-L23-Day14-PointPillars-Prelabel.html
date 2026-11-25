@@ -1,0 +1,2513 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="light">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Day 14 Lab — Pre-label 3D bằng PointPillars pre-trained (VF LiDAR) · Timer &amp; Hướng dẫn Lab</title>
+  <style>
+    :root {
+      --bg: #f5f3ee;
+      --card: #fffdf9;
+      --ink: #1d1c1a;
+      --muted: #6c675e;
+      --line: #e3ded3;
+      --soft: #efebe3;
+      --warn: #c2410c;
+      --warn-bg: #fff4e8;
+      --warn-line: #f3c9a3;
+      --over: #b91c1c;
+      --over-bg: #fff1f1;
+      --over-line: #f2b8b8;
+      --ok: #15803d;
+      --ok-bg: #dcfce7;
+      --ok-line: #86efac;
+      --info-bg: #eff6ff;
+      --info-line: #bfdbfe;
+      --info-ink: #1d4ed8;
+      --code-bg: #1f1e1b;
+      --code-ink: #f3efe6;
+      --code-bar: #2e2c28;
+      --pc: #2563eb;
+      --sans: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      --mono: "JetBrains Mono", "Cascadia Code", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    html[data-theme="dark"] {
+      --bg: #141311;
+      --card: #1d1c19;
+      --ink: #f3efe6;
+      --muted: #aca598;
+      --line: #34312b;
+      --soft: #282520;
+      --warn: #fb923c;
+      --warn-bg: #2e1d10;
+      --warn-line: #7c3a16;
+      --over: #f87171;
+      --over-bg: #331515;
+      --over-line: #7f2525;
+      --ok: #4ade80;
+      --ok-bg: #112a1a;
+      --ok-line: #1f6f3b;
+      --info-bg: #162235;
+      --info-line: #28456e;
+      --info-ink: #93c5fd;
+      --code-bg: #0d0c0a;
+      --code-ink: #f3efe6;
+      --code-bar: #24221e;
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    html {
+      scroll-behavior: smooth
+    }
+
+    html,
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.55
+    }
+
+    a {
+      color: color-mix(in srgb, var(--pc) 85%, var(--ink));
+      text-decoration: none
+    }
+
+    a:hover {
+      text-decoration: underline
+    }
+
+    button,
+    input {
+      font-family: inherit;
+      font-size: inherit
+    }
+
+    code {
+      font-family: var(--mono);
+      font-variant-ligatures: none;
+      font-feature-settings: "liga" 0, "calt" 0;
+      font-size: .86em;
+      background: var(--soft);
+      border: 1px solid var(--line);
+      padding: .08em .38em;
+      border-radius: 5px;
+      overflow-wrap: anywhere
+    }
+
+    @media (min-width:600px),
+    print {
+      .nw {
+        white-space: nowrap
+      }
+    }
+
+    .wrap {
+      max-width: 1360px;
+      margin: 0 auto;
+      padding: 18px 22px 44px
+    }
+
+    /* ---------- top bar ---------- */
+    .top {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 14px
+    }
+
+    .title {
+      flex: 1 1 320px
+    }
+
+    .title-badges {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 4px
+    }
+
+    .tbadge {
+      font-family: var(--mono);
+      font-size: 11.5px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: var(--soft);
+      border: 1px solid var(--line);
+      color: var(--muted)
+    }
+
+    .title h1 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -.01em
+    }
+
+    .title p {
+      margin: 2px 0 0;
+      color: var(--muted);
+      font-size: 13px
+    }
+
+    .controls {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      align-items: center
+    }
+
+    .btn {
+      border: 1px solid var(--line);
+      background: var(--card);
+      color: var(--ink);
+      padding: 7px 11px;
+      border-radius: 9px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+      transition: background .15s, border-color .15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px
+    }
+
+    .btn:hover {
+      border-color: var(--muted);
+      background: var(--soft)
+    }
+
+    .btn.primary {
+      background: var(--ink);
+      color: var(--bg);
+      border-color: var(--ink);
+      min-width: 116px;
+      justify-content: center
+    }
+
+    .btn.primary:hover {
+      opacity: .9;
+      background: var(--ink)
+    }
+
+    .btn.danger {
+      color: var(--over)
+    }
+
+    .btn.on {
+      background: var(--soft);
+      border-color: var(--muted)
+    }
+
+    .sync {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid var(--line);
+      background: var(--card);
+      border-radius: 9px;
+      padding: 3px 4px 3px 10px;
+      font-size: 13px;
+      color: var(--muted)
+    }
+
+    .sync input {
+      border: 0;
+      background: transparent;
+      font-weight: 600;
+      color: var(--ink);
+      width: 94px
+    }
+
+    .sync .btn {
+      padding: 4px 9px
+    }
+
+    /* ---------- hero ---------- */
+    .hero {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 14px;
+      margin-bottom: 14px
+    }
+
+    .now {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-left: 8px solid var(--pc);
+      border-radius: 16px;
+      padding: 18px 22px;
+      position: relative;
+      overflow: hidden
+    }
+
+    .now.warn {
+      background: var(--warn-bg);
+      border-color: var(--warn-line);
+      border-left-color: var(--warn)
+    }
+
+    .now.over {
+      background: var(--over-bg);
+      border-color: var(--over-line);
+      border-left-color: var(--over)
+    }
+
+    .now .lab {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      font-weight: 700;
+      padding-right: 110px
+    }
+
+    .cpb {
+      display: inline-block;
+      background: var(--pc);
+      color: #fff;
+      font-weight: 800;
+      font-size: 12px;
+      padding: 2px 9px;
+      border-radius: 999px;
+      letter-spacing: .03em
+    }
+
+    .mode {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 2px 9px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: var(--soft);
+      color: var(--muted)
+    }
+
+    .mode.indep {
+      color: var(--warn);
+      border-color: var(--warn-line);
+      background: var(--warn-bg)
+    }
+
+    .mode.ai {
+      color: #7c3aed;
+      border-color: color-mix(in srgb, #7c3aed 35%, var(--line));
+      background: color-mix(in srgb, #7c3aed 10%, var(--card))
+    }
+
+    .mode.review {
+      color: #0f766e;
+      border-color: color-mix(in srgb, #0f766e 35%, var(--line));
+      background: color-mix(in srgb, #0f766e 10%, var(--card))
+    }
+
+    .mode.setup {
+      color: #475569;
+      border-color: color-mix(in srgb, #475569 30%, var(--line));
+      background: var(--soft)
+    }
+
+    html[data-theme="dark"] .mode.ai {
+      color: #c4b5fd
+    }
+
+    html[data-theme="dark"] .mode.review {
+      color: #5eead4
+    }
+
+    html[data-theme="dark"] .mode.setup {
+      color: #cbd5e1
+    }
+
+    .phase-name {
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -.01em
+    }
+
+    .big {
+      font-family: var(--mono);
+      font-weight: 700;
+      font-size: 94px;
+      line-height: 1.02;
+      letter-spacing: -.02em;
+      margin: 8px 0 4px;
+      font-variant-numeric: tabular-nums
+    }
+
+    .now.warn .big {
+      color: var(--warn)
+    }
+
+    .now.over .big {
+      color: var(--over)
+    }
+
+    .sub {
+      color: var(--muted);
+      font-size: 14px
+    }
+
+    .sub b {
+      color: var(--ink)
+    }
+
+    .pbar {
+      height: 8px;
+      background: var(--soft);
+      border-radius: 99px;
+      margin-top: 12px;
+      overflow: hidden
+    }
+
+    .pbar i {
+      display: block;
+      height: 100%;
+      width: 0;
+      background: var(--pc);
+      border-radius: 99px;
+      transition: width .25s linear
+    }
+
+    .state-pill {
+      position: absolute;
+      top: 16px;
+      right: 18px;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 99px;
+      background: var(--soft);
+      color: var(--muted)
+    }
+
+    .state-pill.run {
+      background: var(--ok-bg);
+      color: var(--ok)
+    }
+
+    .totals {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px 20px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px 18px;
+      align-content: start
+    }
+
+    .stat .k {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .05em
+    }
+
+    .stat .v {
+      font-family: var(--mono);
+      font-size: 30px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums
+    }
+
+    .stat.wide {
+      grid-column: 1/-1
+    }
+
+    .next {
+      border-top: 1px dashed var(--line);
+      padding-top: 10px;
+      font-size: 14px
+    }
+
+    /* ---------- timeline ---------- */
+    .timeline {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px 16px 32px;
+      margin-bottom: 14px
+    }
+
+    .tl-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 600;
+      margin-bottom: 8px
+    }
+
+    .prep-pill {
+      padding: 3px 9px;
+      font-size: 11.5px;
+      border-radius: 999px
+    }
+
+    .track {
+      position: relative;
+      display: flex;
+      height: 46px;
+      border-radius: 10px;
+      overflow: visible
+    }
+
+    .seg {
+      position: relative;
+      height: 100%;
+      border-right: 2px solid var(--card);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      color: #fff;
+      font-size: 11.5px;
+      font-weight: 700;
+      line-height: 1.15;
+      text-align: center;
+      overflow: hidden;
+      opacity: .62;
+      transition: opacity .2s;
+      padding: 0 2px
+    }
+
+    .seg:first-child {
+      border-radius: 10px 0 0 10px
+    }
+
+    .seg:last-child {
+      border-radius: 0 10px 10px 0;
+      border-right: 0
+    }
+
+    .seg.done {
+      opacity: .38
+    }
+
+    .seg.cur {
+      opacity: 1
+    }
+
+    .seg.sel {
+      outline: 3px solid var(--ink);
+      outline-offset: -3px;
+      opacity: 1
+    }
+
+    .seg small {
+      font-weight: 500;
+      opacity: .92;
+      font-size: 10px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%
+    }
+
+    .needle {
+      position: absolute;
+      top: -6px;
+      bottom: -6px;
+      width: 3px;
+      background: var(--ink);
+      border-radius: 2px;
+      left: 0;
+      pointer-events: none;
+      transition: left .25s linear
+    }
+
+    .needle::after {
+      content: "";
+      position: absolute;
+      top: -6px;
+      left: -5px;
+      border: 6.5px solid transparent;
+      border-top-color: var(--ink)
+    }
+
+    .ticks {
+      position: relative;
+      height: 0
+    }
+
+    .tick {
+      position: absolute;
+      top: 6px;
+      transform: translateX(-50%);
+      font-size: 10.5px;
+      color: var(--muted);
+      font-weight: 600;
+      white-space: nowrap;
+      text-align: center;
+      line-height: 1.2
+    }
+
+    .tick b {
+      display: block;
+      color: var(--ink);
+      font-size: 10.5px
+    }
+
+    /* ---------- main layout & stepper/TOC ---------- */
+    .layout {
+      display: grid;
+      grid-template-columns: 288px 1fr;
+      gap: 16px;
+      align-items: start
+    }
+
+    .stepper {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 10px;
+      position: sticky;
+      top: 12px;
+      max-height: calc(100vh - 24px);
+      overflow-y: auto
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 46px 1fr auto;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 10px;
+      border-radius: 11px;
+      cursor: pointer;
+      border: 1px solid transparent
+    }
+
+    .step:hover {
+      background: var(--soft)
+    }
+
+    .step.sel {
+      background: var(--soft);
+      border-color: var(--line)
+    }
+
+    .step .dot {
+      font-size: 11px;
+      font-weight: 800;
+      color: #fff;
+      border-radius: 8px;
+      padding: 5px 0;
+      text-align: center
+    }
+
+    .step .nm {
+      font-weight: 700;
+      font-size: 13.5px;
+      line-height: 1.25
+    }
+
+    .step .tm {
+      font-size: 11.5px;
+      color: var(--muted);
+      font-weight: 500
+    }
+
+    .step .cnt {
+      font-size: 11.5px;
+      color: var(--muted);
+      font-weight: 700;
+      font-family: var(--mono)
+    }
+
+    .step.cur .nm::after {
+      content: " ●";
+      color: var(--ok);
+      font-size: 11px
+    }
+
+    .step.done .nm {
+      color: var(--muted)
+    }
+
+    .follow {
+      margin: 6px 0 8px;
+      width: 100%;
+      justify-content: center
+    }
+
+    .toc-box {
+      border-top: 1px dashed var(--line);
+      margin-top: 8px;
+      padding-top: 10px
+    }
+
+    .toc-title {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--muted);
+      margin: 0 6px 6px
+    }
+
+    .toc-link {
+      display: block;
+      padding: 4px 8px;
+      border-radius: 7px;
+      font-size: 12.5px;
+      color: var(--muted);
+      line-height: 1.35
+    }
+
+    .toc-link:hover {
+      background: var(--soft);
+      color: var(--ink);
+      text-decoration: none
+    }
+
+    .toc-link.sub {
+      padding-left: 18px;
+      font-size: 12px
+    }
+
+    .toc-link.active {
+      background: var(--soft);
+      color: var(--ink);
+      font-weight: 700
+    }
+
+    /* ---------- active phase panel ---------- */
+    #panelHost {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      min-width: 0
+    }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 22px 24px;
+      border-top: 6px solid var(--pc);
+      min-width: 0
+    }
+
+    .p-head {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 6px
+    }
+
+    .p-head h2 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -.01em;
+      flex: 1 1 auto
+    }
+
+    .p-meta {
+      color: var(--muted);
+      font-size: 13.5px;
+      margin-bottom: 14px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center
+    }
+
+    .p-actions {
+      display: flex;
+      gap: 6px
+    }
+
+    .goalbox {
+      background: color-mix(in srgb, var(--pc) 9%, var(--card));
+      border: 1px solid color-mix(in srgb, var(--pc) 32%, var(--card));
+      border-radius: 13px;
+      padding: 14px 16px;
+      margin-bottom: 16px
+    }
+
+    .goalbox h3 {
+      margin: 0 0 6px;
+      font-size: 13.5px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: color-mix(in srgb, var(--pc) 80%, var(--ink))
+    }
+
+    .cols {
+      display: grid;
+      grid-template-columns: 1.25fr 1fr;
+      gap: 18px
+    }
+
+    .cols > div,
+    .panel > *,
+    ul.chk li > span {
+      min-width: 0
+    }
+
+    .sec {
+      margin-bottom: 16px
+    }
+
+    .sec h3 {
+      margin: 0 0 8px;
+      font-size: 12.5px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--muted)
+    }
+
+    ul.chk {
+      list-style: none;
+      margin: 0;
+      padding: 0
+    }
+
+    ul.chk li {
+      display: grid;
+      grid-template-columns: 22px 1fr;
+      gap: 8px;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--soft);
+      align-items: start
+    }
+
+    ul.chk li:last-child {
+      border-bottom: 0
+    }
+
+    ul.chk input {
+      width: 17px;
+      height: 17px;
+      margin: 3px 0 0;
+      accent-color: var(--pc);
+      cursor: pointer
+    }
+
+    ul.chk li.checked span {
+      color: var(--muted);
+      text-decoration: line-through;
+      text-decoration-color: var(--muted)
+    }
+
+    ul.chk .num {
+      font-weight: 800;
+      color: var(--pc);
+      margin-right: 4px
+    }
+
+    ul.plain {
+      margin: 0;
+      padding-left: 18px
+    }
+
+    ul.plain li {
+      margin: 5px 0
+    }
+
+    .q {
+      background: var(--soft);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 14.5px
+    }
+
+    .q b.qtitle {
+      display: block;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--muted);
+      margin-bottom: 4px
+    }
+
+    .cmd {
+      display: flex;
+      align-items: stretch;
+      margin: 8px 0;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid var(--line)
+    }
+
+    .cmd pre {
+      margin: 0;
+      flex: 1;
+      background: var(--code-bg);
+      color: var(--code-ink);
+      font-family: var(--mono);
+      font-variant-ligatures: none;
+      font-feature-settings: "liga" 0, "calt" 0;
+      font-size: 12.6px;
+      padding: 10px 12px;
+      white-space: pre-wrap;
+      overflow-wrap: break-word;
+      overflow-x: auto
+    }
+
+    .cmd button {
+      border: 0;
+      background: var(--code-bar);
+      color: #e5dfd2;
+      font-weight: 700;
+      font-size: 12px;
+      padding: 0 12px;
+      cursor: pointer;
+      min-width: 68px;
+      flex-shrink: 0
+    }
+
+    .cmd button:hover {
+      background: var(--pc);
+      color: #fff
+    }
+
+    .cmd .cm {
+      display: block;
+      color: #a8a294;
+      font-size: 11.5px;
+      margin-bottom: 3px
+    }
+
+    .note {
+      border-left: 3px solid var(--warn);
+      background: var(--warn-bg);
+      padding: 9px 12px;
+      border-radius: 0 10px 10px 0;
+      margin: 6px 0;
+      font-size: 14px
+    }
+
+    .rub {
+      font-size: 13.5px;
+      color: var(--muted);
+      background: var(--soft);
+      padding: 10px 12px;
+      border-radius: 10px
+    }
+
+    .rub strong {
+      color: var(--ink)
+    }
+
+    /* ---------- deep walkthrough inside phase ---------- */
+    .deep-wrap {
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 2px dashed var(--line)
+    }
+
+    .deep-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+      flex-wrap: wrap
+    }
+
+    .deep-banner h3 {
+      margin: 0;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--muted)
+    }
+
+    .deep-h {
+      font-size: 16.5px;
+      font-weight: 800;
+      margin: 20px 0 8px;
+      color: var(--ink);
+      scroll-margin-top: 18px
+    }
+
+    .deep-ol {
+      padding-left: 20px;
+      margin: 8px 0 14px
+    }
+
+    .deep-ol li {
+      margin: 7px 0
+    }
+
+    .sub-li {
+      margin-top: 4px;
+      padding-left: 10px;
+      color: var(--muted);
+      font-size: 14px
+    }
+
+    .callout {
+      margin: 14px 0;
+      padding: 12px 15px;
+      border-radius: 10px;
+      border-left: 4px solid var(--info-ink);
+      background: var(--info-bg)
+    }
+
+    .callout-warning {
+      border-left-color: var(--warn);
+      background: var(--warn-bg)
+    }
+
+    .callout-danger {
+      border-left-color: var(--over);
+      background: var(--over-bg)
+    }
+
+    .callout-success {
+      border-left-color: var(--ok);
+      background: var(--ok-bg)
+    }
+
+    .callout-title {
+      font-weight: 800;
+      font-size: 14px;
+      margin-bottom: 4px
+    }
+
+    .callout-body p:first-child {
+      margin-top: 0
+    }
+
+    .callout-body p:last-child {
+      margin-bottom: 0
+    }
+
+    .checklist-box {
+      margin: 14px 0;
+      padding: 12px 15px;
+      border-radius: 11px;
+      border: 1px solid var(--line);
+      background: var(--soft)
+    }
+
+    .checklist-success {
+      border-color: var(--ok-line);
+      background: var(--ok-bg)
+    }
+
+    .checklist-title {
+      font-weight: 800;
+      font-size: 14px;
+      margin-bottom: 6px
+    }
+
+    .repo-card {
+      margin: 14px 0;
+      padding: 14px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--soft)
+    }
+
+    .repo-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--muted);
+      font-weight: 800
+    }
+
+    .repo-title {
+      font-size: 15.5px;
+      font-weight: 800;
+      margin: 2px 0 4px
+    }
+
+    .repo-url {
+      margin-bottom: 8px
+    }
+
+    .repo-links {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap
+    }
+
+    .repo-pill {
+      background: var(--ink);
+      color: var(--bg);
+      border-color: var(--ink)
+    }
+
+    .repo-pill:hover {
+      text-decoration: none;
+      opacity: .9
+    }
+
+    .code-tabs {
+      margin: 14px 0;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      overflow: hidden;
+      background: var(--card)
+    }
+
+    .code-tabs-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 8px 12px;
+      background: var(--soft);
+      border-bottom: 1px solid var(--line)
+    }
+
+    .code-tabs-title {
+      font-size: 13px;
+      font-weight: 700
+    }
+
+    .tab-btns {
+      display: flex;
+      gap: 6px
+    }
+
+    .tab-btn {
+      cursor: pointer;
+      border: 1px solid var(--line);
+      background: var(--card);
+      color: var(--muted);
+      padding: 4px 10px;
+      border-radius: 7px;
+      font-size: 12.5px;
+      font-weight: 700
+    }
+
+    .tab-btn.active {
+      background: var(--ink);
+      color: var(--bg);
+      border-color: var(--ink)
+    }
+
+    .tab-panel {
+      display: none
+    }
+
+    .tab-panel.active {
+      display: block
+    }
+
+    .tab-panel .cmd {
+      margin: 0;
+      border: 0;
+      border-radius: 0
+    }
+
+    /* ---------- figures & lightbox ---------- */
+    .lab-figure {
+      margin: 14px 0;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--soft);
+      text-align: center
+    }
+
+    .lab-figure img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      cursor: zoom-in;
+      display: block;
+      margin: 0 auto;
+      box-shadow: 0 3px 12px rgba(0, 0, 0, .08)
+    }
+
+    .lab-figure figcaption {
+      margin-top: 8px;
+      font-size: 13px;
+      color: var(--muted)
+    }
+
+    .lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: rgba(15, 14, 12, .92);
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      padding: 24px
+    }
+
+    .lightbox.open {
+      display: flex
+    }
+
+    .lightbox img {
+      max-width: 92vw;
+      max-height: 80vh;
+      border-radius: 10px;
+      box-shadow: 0 12px 42px rgba(0, 0, 0, .6)
+    }
+
+    .lightbox-cap {
+      color: #f3efe6;
+      margin-top: 12px;
+      font-size: 14px;
+      text-align: center;
+      max-width: 860px
+    }
+
+    .lightbox-idx {
+      color: #aca598;
+      font-family: var(--mono);
+      font-size: 12px;
+      margin-top: 4px
+    }
+
+    .lb-btn {
+      position: fixed;
+      cursor: pointer;
+      background: rgba(255, 255, 255, .14);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, .25);
+      border-radius: 999px;
+      width: 44px;
+      height: 44px;
+      font-size: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center
+    }
+
+    .lb-btn:hover {
+      background: rgba(255, 255, 255, .28)
+    }
+
+    .lb-close {
+      top: 18px;
+      right: 22px
+    }
+
+    .lb-prev {
+      left: 20px;
+      top: 50%;
+      transform: translateY(-50%)
+    }
+
+    .lb-next {
+      right: 20px;
+      top: 50%;
+      transform: translateY(-50%)
+    }
+
+    /* ---------- reference & troubleshooting cards ---------- */
+    .ref {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 16px
+    }
+
+    .refcard {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px 20px;
+      min-width: 0;
+      overflow-x: auto
+    }
+
+    .refcard.wide {
+      grid-column: 1/-1
+    }
+
+    .refcard.wide td:first-child {
+      width: 35%;
+      padding-right: 14px
+    }
+
+    .refcard.wide td code {
+      word-break: normal;
+      overflow-wrap: anywhere
+    }
+
+    @media (max-width:599px) {
+      .refcard.wide table {
+        table-layout: fixed
+      }
+    }
+
+    .refcard h3 {
+      margin: 0 0 10px;
+      font-size: 15px;
+      font-weight: 800
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 13.5px
+    }
+
+    td,
+    th {
+      padding: 7px 6px;
+      border-bottom: 1px solid var(--soft);
+      vertical-align: top;
+      text-align: left
+    }
+
+    .ref-thresh td:last-child {
+      text-align: right;
+      font-weight: 700;
+      font-family: var(--mono);
+      font-size: 12.5px;
+      white-space: nowrap
+    }
+
+    .kbd {
+      font-family: var(--mono);
+      font-size: 11px;
+      border: 1px solid var(--line);
+      border-bottom-width: 2px;
+      border-radius: 5px;
+      padding: 0 5px;
+      background: var(--card);
+      color: var(--ink)
+    }
+
+    .foot {
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 12.5px;
+      text-align: center
+    }
+
+    /* ---------- toast ---------- */
+    .toast {
+      position: fixed;
+      left: 50%;
+      top: 18px;
+      transform: translate(-50%, -150%);
+      background: var(--ink);
+      color: var(--bg);
+      padding: 14px 20px;
+      border-radius: 14px;
+      font-weight: 700;
+      font-size: 15.5px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, .28);
+      z-index: 80;
+      transition: transform .35s cubic-bezier(.2, .9, .3, 1.2);
+      max-width: min(720px, 92vw);
+      display: flex;
+      gap: 14px;
+      align-items: center
+    }
+
+    .toast.show {
+      transform: translate(-50%, 0)
+    }
+
+    .toast.warn {
+      background: var(--warn);
+      color: #fff
+    }
+
+    .toast.go {
+      background: var(--ok);
+      color: #fff
+    }
+
+    .toast button {
+      background: rgba(255, 255, 255, .2);
+      border: 0;
+      color: #fff;
+      font-weight: 700;
+      border-radius: 8px;
+      padding: 5px 10px;
+      cursor: pointer
+    }
+
+    /* ---------- presentation mode ---------- */
+    body.present .stepper,
+    body.present .ref,
+    body.present .hide-present,
+    body.present .deep-wrap,
+    body.present .foot {
+      display: none
+    }
+
+    body.present .layout {
+      grid-template-columns: 1fr
+    }
+
+    body.present .big {
+      font-size: 150px
+    }
+
+    body.present .phase-name {
+      font-size: 32px
+    }
+
+    body.present .panel {
+      font-size: 18px
+    }
+
+    body.present ul.chk li {
+      padding: 8px 0
+    }
+
+    body.present .cols {
+      grid-template-columns: 1.2fr 1fr
+    }
+
+    [hidden] {
+      display: none !important
+    }
+
+    @media (max-width:980px) {
+
+      .hero,
+      .layout,
+      .cols,
+      .ref {
+        grid-template-columns: 1fr
+      }
+
+      .stepper {
+        position: static;
+        max-height: none
+      }
+
+      .big {
+        font-size: 70px
+      }
+
+      .seg {
+        font-size: 0
+      }
+
+      .seg small {
+        font-size: 0
+      }
+    }
+
+    @media (max-width:720px) {
+      .timeline {
+        padding-bottom: 62px
+      }
+
+      .tick {
+        font-size: 9.5px
+      }
+
+      .tick b {
+        font-size: 9.5px
+      }
+
+      .tick.tick-stagger {
+        top: 30px
+      }
+
+      .tick.tick-stagger::before {
+        content: "";
+        position: absolute;
+        left: 50%;
+        top: -24px;
+        width: 1px;
+        height: 22px;
+        background: color-mix(in srgb, var(--muted) 45%, transparent)
+      }
+
+      .tick.tick-end {
+        transform: translateX(-50%) !important
+      }
+
+      .tick.tick-end::before {
+        left: 50%
+      }
+    }
+
+    /* ---------- print / PDF export ---------- */
+    @page {
+      size: A4;
+      margin: 13mm 12mm 14mm 12mm
+    }
+
+    @media print {
+      :root {
+        --bg: #fff;
+        --card: #fff;
+        --ink: #1d1c1a;
+        --muted: #5c574f;
+        --line: #dcd6ca;
+        --soft: #f4f1ea
+      }
+
+      html,
+      body {
+        background: #fff !important;
+        color: #1d1c1a !important;
+        font-size: 12.5px;
+        line-height: 1.48;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact
+      }
+
+      .wrap {
+        max-width: none;
+        padding: 0
+      }
+
+      .controls,
+      .hero,
+      .p-actions,
+      .stepper,
+      .follow,
+      .cmd button,
+      .tab-btns,
+      .toast,
+      .lightbox,
+      .deep-banner button,
+      #tlPct,
+      .needle,
+      .kbd-hint,
+      .tl-interactive-hint,
+      .prep-pill {
+        display: none !important
+      }
+
+      .wall-clock-wrap {
+        display: none !important
+      }
+
+      .timeline {
+        padding: 10px 12px 34px;
+        margin-bottom: 12px;
+        background: #fffdf9 !important;
+        break-inside: avoid
+      }
+
+      .track {
+        height: 32px
+      }
+
+      .tick {
+        top: 6px !important;
+        font-size: 10.5px !important
+      }
+
+      .tick b {
+        font-size: 10.5px !important
+      }
+
+      .tick::before {
+        display: none !important
+      }
+
+      .tick.tick-end {
+        transform: translateX(-100%) !important
+      }
+      .tick.tick-break-print {
+        top: 17px !important;
+        font-size: 9.5px !important
+      }
+
+      .seg {
+        opacity: 1 !important;
+        outline: none !important;
+        font-size: 10.5px !important
+      }
+
+      .seg small {
+        display: none !important
+      }
+
+      .layout {
+        display: block
+      }
+
+      #panelHost {
+        display: block
+      }
+
+      .panel {
+        margin-bottom: 14px;
+        padding: 14px 16px;
+        background: #fff !important;
+        border-radius: 12px
+      }
+
+      .cols {
+        display: block
+      }
+
+      .deep-slot {
+        display: block !important
+      }
+
+      .tab-panel {
+        display: block !important;
+        border-bottom: 1px solid #3c3932
+      }
+
+      .tab-panel:last-child {
+        border-bottom: 0
+      }
+
+      .goalbox,
+      .callout,
+      .checklist-box,
+      .repo-card,
+      .cmd,
+      .code-tabs,
+      .lab-figure,
+      .note,
+      .q,
+      .refcard,
+      tr {
+        break-inside: avoid
+      }
+
+      h2,
+      h3,
+      .deep-h,
+      .p-head,
+      .p-meta,
+      .deep-banner {
+        break-after: avoid
+      }
+
+      p,
+      li {
+        orphans: 3;
+        widows: 3
+      }
+
+      .lab-figure {
+        margin: 10px 0;
+        padding: 8px
+      }
+
+      .lab-figure img {
+        max-height: 95mm;
+        width: auto;
+        max-width: 100%;
+        box-shadow: none
+      }
+
+      .ref {
+        display: block;
+        margin-top: 12px
+      }
+
+      .refcard {
+        margin-bottom: 8px;
+        padding: 12px 16px;
+        background: #fff !important
+      }
+
+      .refcard td {
+        padding: 5px 6px
+      }
+
+      .foot {
+        margin-top: 8px;
+        font-size: 11px;
+        break-inside: avoid
+      }
+
+      pre {
+        font-size: 11px !important;
+        padding: 8px 10px !important
+      }
+
+      a {
+        color: #1d4ed8 !important;
+        text-decoration: none
+      }
+
+      a.repo-pill {
+        background: #fff !important;
+        color: #1d4ed8 !important;
+        border: 1.5px solid #1d4ed8 !important
+      }
+    }
+
+    body.print-mode {
+      background: #fff !important;
+      color: #1d1c1a !important
+    }
+
+    body.print-mode .controls,
+    body.print-mode .hero,
+    body.print-mode .p-actions,
+    body.print-mode .stepper,
+    body.print-mode .follow,
+    body.print-mode .cmd button,
+    body.print-mode .tab-btns,
+    body.print-mode .toast,
+    body.print-mode .deep-banner button,
+    body.print-mode #tlPct,
+    body.print-mode .needle,
+    body.print-mode .wall-clock-wrap,
+    body.print-mode .kbd-hint,
+    body.print-mode .tl-interactive-hint,
+    body.print-mode .seg small,
+    body.print-mode .prep-pill {
+      display: none !important
+    }
+
+    body.print-mode .layout {
+      display: block
+    }
+
+    body.print-mode .cols {
+      display: block
+    }
+
+    body.print-mode .ref {
+      display: block
+    }
+
+    body.print-mode .refcard {
+      margin-bottom: 12px;
+      background: #fff !important
+    }
+
+    body.print-mode .tab-panel {
+      display: block !important;
+      border-bottom: 1px solid #3c3932
+    }
+
+    body.print-mode .tab-panel:last-child {
+      border-bottom: 0
+    }
+
+    body.print-mode .deep-slot {
+      display: block !important
+    }
+
+    body.print-mode .seg {
+      opacity: 1 !important;
+      outline: none !important
+    }
+
+    body.print-mode .lab-figure img {
+      max-height: 95mm;
+      width: auto;
+      max-width: 100%
+    }
+
+    .tw {
+      overflow-x: auto;
+      margin: 12px 0;
+    }
+    .deep-table th {
+      background: var(--soft);
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+
+    <div class="top">
+      <div class="title">
+        <div class="title-badges">
+          <span class="tbadge">D14</span>
+          <span class="tbadge">individual · cá nhân</span>
+          <span class="tbadge">a5f6b9c · 240 phút trên lớp</span>
+        </div>
+        <h1>Day 14 Lab — Pre-label 3D bằng PointPillars pre-trained (VF LiDAR)</h1>
+        <p>Bài cá nhân · 4 giờ trên lớp (+ ~10′ chuẩn bị) · PyTorch CPU · CVAT 3D (D14-&lt;ID&gt;-A/B) · Sweep &amp; Compare · Nộp K5-DAY14-HoVaTen-MSSV</p>
+      </div>
+      <div class="controls">
+        <button class="btn primary" id="bStart" title="Phím tắt: Space">▶ Bắt đầu</button>
+        <button class="btn" data-adj="-5" title="Lùi 5 phút">−5′</button>
+        <button class="btn" data-adj="-1" title="Lùi 1 phút">−1′</button>
+        <button class="btn" data-adj="1" title="Tiến 1 phút">+1′</button>
+        <button class="btn" data-adj="5" title="Tiến 5 phút">+5′</button>
+        <label class="sync" title="Nhập giờ lớp thực sự bắt đầu để đồng bộ đồng hồ">
+          Bắt đầu lúc <input type="time" id="syncTime"><button class="btn" id="bSync">Đồng bộ</button>
+        </label>
+        <button class="btn" id="bViewAll" title="Chuyển giữa chế độ từng pha và xem toàn bộ">📖 Xem tất cả</button>
+        <button class="btn" id="bTheme" title="Phím tắt: T">🌙 Tối</button>
+        <button class="btn" id="bSound" title="Bật/tắt âm báo">🔔 Âm báo</button>
+        <button class="btn" id="bPresent" title="Phím tắt: P">🖥 Trình chiếu</button>
+        <button class="btn" id="bFull" title="Phím tắt: F">⛶</button>
+        <button class="btn danger" id="bReset">↺ Đặt lại</button>
+      </div>
+    </div>
+
+    <div class="hero">
+      <div class="now" id="now">
+        <span class="state-pill" id="statePill">Chưa bắt đầu</span>
+        <div class="lab"><span class="cpb" id="nowCp">CP1</span><span class="phase-name" id="nowName">Pha 1 · 6 frame giảng, hệ trục &amp; chi phí</span><span class="mode" id="nowMode"></span></div>
+        <div class="big" id="nowLeft">40:00</div>
+        <div class="sub" id="nowSub">Còn lại tới mốc CP1</div>
+        <div class="pbar"><i id="nowBar"></i></div>
+      </div>
+      <div class="totals">
+        <div class="stat">
+          <div class="k">Đã trôi</div>
+          <div class="v" id="tElapsed">0:00:00</div>
+        </div>
+        <div class="stat">
+          <div class="k">Còn lại (tổng)</div>
+          <div class="v" id="tLeft">4:00:00</div>
+        </div>
+        <div class="stat">
+          <div class="k">Giờ hiện tại</div>
+          <div class="v" id="tClock">--:--</div>
+        </div>
+        <div class="stat">
+          <div class="k">Dự kiến kết thúc</div>
+          <div class="v" id="tEnd">--:--</div>
+        </div>
+        <div class="stat wide next" id="tNext"></div>
+      </div>
+    </div>
+
+    <div class="timeline">
+      <div class="tl-head">
+        <span>Tiến độ 240 phút trên lớp (CP1 → CP4)<span class="tl-interactive-hint"> — bấm vào từng pha để xem chi tiết &amp; checklist</span></span>
+        <span style="display:flex;align-items:center;gap:8px">
+          <button type="button" class="btn prep-pill" onclick="select(0,true)" title="Xem phần chuẩn bị trước buổi giảng (~10 phút)">🔧 Xem Pha 0 · Trước buổi giảng (~10′)</button>
+          <span id="tlPct">0%</span>
+        </span>
+      </div>
+      <div class="track" id="track"><div class="needle" id="needle"></div></div>
+      <div class="ticks" id="ticks"></div>
+    </div>
+
+    <div class="layout">
+      <aside class="stepper" id="stepper"></aside>
+      <div id="panelHost"></div>
+    </div>
+
+    <div id="deepArchive" hidden>
+      <div class="deep-panel" data-deep-id="cp0"><p># Day 14 Lab — Pre-label 3D bằng PointPillars pre-trained (VF LiDAR)</p>
+<p>Bài thực hành cá nhân này kéo dài <strong>240 phút trên lớp</strong> (cộng <strong>~10 phút chuẩn bị trước buổi giảng</strong>) trên dữ liệu LiDAR 360° của Day 13. Bạn sẽ chạy model PointPillars đã huấn luyện sẵn trên tập KITTI (<code>zhulf0804/PointPillars</code>, giấy phép MIT, commit <code>620e6b0</code>) hoàn toàn bằng CPU mà không cần GPU hay biên dịch CUDA: hai phép toán CUDA gốc là <code>voxelize</code> và <code>rotated NMS</code> đã được thay bằng mã PyTorch thuần trong <code>vf_pp/upstream.py</code>, còn mã nguồn upstream không bị sửa dòng nào. Từ kết quả pre-label, bạn đẩy box lên CVAT 3D, tự sửa tay 3 frame tập A làm nhãn tham chiếu, quét tham số để đo mức giảm công sửa trên thước đo <code>0.3·xóa + 1.0·thêm + 0.5·sửa</code>, rồi hoàn thiện 12 frame tập B để đóng gói nộp về hệ thống lớp dưới thư mục <code>K5-DAY14-HoVaTen-MSSV/</code>. Bộ dữ liệu <code>&lt;Data-VF&gt;</code> (chứa <code>sequence_01 … sequence_05</code>) và thông tin truy cập CVAT được giảng viên phát qua kênh lớp/LMS; tài liệu hướng dẫn này không chứa mật khẩu, token hay dữ liệu nhãn đáp án.</p>
+<p>Trước buổi giảng, hãy clone repository chính thức, dựng môi trường ảo Python 3.9+ và tải mã upstream PointPillars cùng weights KITTI (~20 MB). Hoàn tất bước này trước giờ học giúp bạn kiểm tra CPU, PyTorch và đường dẫn <code>&lt;Data-VF&gt;</code> (<code>sequence_01 … sequence_05</code>) đều sẵn sàng.</p>
+<div class="repo-card"><div class="repo-label">Repository nguồn</div><div class="repo-title">Repo gốc Day 14 — K5-L23-Day14-PointPillars-Prelabel</div><div class="repo-url"><code>https://github.com/VinUni-AI20k/K5-L23-Day14-PointPillars-Prelabel</code></div><div class="repo-links"><a class="btn repo-pill" href="https://github.com/VinUni-AI20k/K5-L23-Day14-PointPillars-Prelabel" target="_blank" rel="noopener">Repository gốc Day 14</a></div></div>
+<p>Script <code>setup_pp.py</code> tải mã upstream đúng commit <code>620e6b0</code> và weights <code>epoch_160.pth</code> mà không biên dịch CUDA nhờ lớp PyTorch thuần trong <code>vf_pp/upstream.py</code>; nếu máy không có <code>git</code>, dùng <code>--download-zip</code> để tải qua HTTPS. Chọn tab theo hệ điều hành để cài PyTorch CPU (<code>torch&gt;=2.1</code>), <code>requirements.txt</code> (<code>numpy</code>, <code>Pillow</code>, <code>cvat-sdk</code>), rồi chạy <code>setup_pp.py</code> và <code>pp_selftest.py</code>. Trên PowerShell 5.1, không dùng <code>&amp;&amp;</code> hay <code>source</code>; chạy từng dòng, cấp quyền tiến trình cho <code>.venv\Scripts\Activate.ps1</code> và đặt <code>$env:PYTHONUTF8 = &quot;1&quot;</code>.</p>
+<div class="code-tabs"><div class="code-tabs-bar"><span class="code-tabs-title">Cài đặt môi trường Python CPU và tự kiểm tra cài đặt</span><div class="tab-btns"><button type="button" class="tab-btn active" onclick="switchTab(this, 0)">Windows (PowerShell)</button><button type="button" class="tab-btn" onclick="switchTab(this, 1)">macOS / Linux (Bash)</button></div></div><div class="tab-panel active"><div class="cmd"><pre><span class="cm"># Windows (PowerShell)
+</span>git clone https://github.com/VinUni-AI20k/K5-L23-Day14-PointPillars-Prelabel.git k5-day14-lab
+cd k5-day14-lab
+python -m venv .venv
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\.venv\Scripts\Activate.ps1
+$env:PYTHONUTF8 = &quot;1&quot;
+pip install torch --index-url https://download.pytorch.org/whl/cpu
+pip install -r requirements.txt
+python setup_pp.py
+python pp_selftest.py --data &quot;&lt;Data-VF&gt;&quot;</pre><button type="button" onclick="copyPre(this)">Copy</button></div></div><div class="tab-panel"><div class="cmd"><pre><span class="cm"># macOS / Linux (Bash)
+</span>git clone https://github.com/VinUni-AI20k/K5-L23-Day14-PointPillars-Prelabel.git k5-day14-lab
+cd k5-day14-lab
+python3 -m venv .venv
+source .venv/bin/activate
+pip install torch --index-url https://download.pytorch.org/whl/cpu
+pip install -r requirements.txt
+python setup_pp.py
+python pp_selftest.py --data &quot;&lt;Data-VF&gt;&quot;</pre><button type="button" onclick="copyPre(this)">Copy</button></div></div></div>
+<ol class="deep-ol">
+<li>Chạy các lệnh trên; nếu bản clone cũ bị lỗi read-only trong <code>third_party/PointPillars/.git</code>, xóa <code>third_party</code> rồi chạy lại <code>python setup_pp.py</code>.</li>
+<li>Chạy <code>python pp_selftest.py --data &quot;&lt;Data-VF&gt;&quot;</code> và kiểm tra mọi dòng đều in <code>[OK ]</code> kèm <code>TẤT CẢ OK</code>.</li>
+<li>Nếu môi trường máy gặp lỗi, dùng <code>Dockerfile</code> (tắt CVAT bằng <code>docker compose stop</code> nếu WSL2 RAM <code>&lt;= 4 GB</code> tránh OOM <code>exit 137</code>, gắn <code>-v &quot;${PWD}\work:/work&quot; -w /work</code> giữ <code>d14_&lt;ID&gt;/</code>, và dùng <code>--host http://host.docker.internal:8080</code>).</li>
+</ol>
+<div class="callout"><div class="callout-title">Chạy qua Docker khi môi trường Python cục bộ lỗi</div><div class="callout-body"><p>Build một lần bằng <code>docker build -t k5-day14-lab .</code>, sau đó chạy <code>docker run --rm -v &quot;C:\path\Data-VF:/data&quot; -v &quot;${PWD}\work:/work&quot; -w /work k5-day14-lab python /lab/pp_selftest.py --data /data</code> và kiểm tra <code>TẤT CẢ OK</code>.</p></div></div>
+<div class="checklist-box checklist-info"><div class="checklist-title">Tín hiệu sẵn sàng trước Pha 1</div><ul class="chk"><li><input type="checkbox" onclick="this.closest('li').classList.toggle('checked', this.checked)"><span>Đã clone đúng repo và kích hoạt <code>.venv</code> có Python 3.9+.</span></li><li><input type="checkbox" onclick="this.closest('li').classList.toggle('checked', this.checked)"><span><code>setup_pp.py</code> tải xong <code>third_party/PointPillars</code> (<code>620e6b0</code>) và <code>epoch_160.pth</code>.</span></li><li><input type="checkbox" onclick="this.closest('li').classList.toggle('checked', this.checked)"><span><code>pp_selftest.py --data &quot;&lt;Data-VF&gt;&quot;</code> in <code>[OK ]</code> ở mọi mục và <code>TẤT CẢ OK</code>.</span></li><li><input type="checkbox" onclick="this.closest('li').classList.toggle('checked', this.checked)"><span>CVAT 3D (<code>http://localhost:8080</code> hoặc server lớp) đăng nhập bình thường.</span></li></ul></div></div>
+<div class="deep-panel" data-deep-id="cp1"><h4 id="deep-cp1-ban-chat-van-de-vi-sao-model-kitti-khong-dung-thang-duoc-tren-vf-lidar" class="deep-h">Bản chất vấn đề: vì sao model KITTI không dùng thẳng được trên VF LiDAR?</h4>
+<p>Một mô hình phát hiện 3D được huấn luyện trên bộ dữ liệu KITTI không thể dự đoán chính xác ngay lập tức khi đưa sang bộ dữ liệu VF của Day 13 vì sự khác biệt cả về hệ tọa độ cảm biến, vùng quét không gian lẫn danh sách lớp đối tượng. Trên bộ KITTI, cảm biến chỉ gán nhãn trong vùng hình nón phía trước xe (<code>x</code> từ <code>0</code> đến <code>69.12 m</code>, <code>|y| &lt; 39.68 m</code>) và chỉ phân biệt ba lớp là <code>Car</code>, <code>Cyclist</code> và <code>Pedestrian</code>. Trong khi đó, đám mây điểm VF LiDAR thu thập toàn cảnh 360° quanh xe với hệ trục đặt khác hẳn: trục <code>x</code> hướng sang trái xe, trục <code>y</code> hướng về phía sau (nên đầu xe là hướng <code>−y</code>), trục <code>z</code> hướng lên, còn góc <code>yaw</code> trong <code>[0, 2π)</code> đo ngược chiều kim đồng hồ từ <code>+x</code>. Đồng thời, dữ liệu VF có thêm hai lớp phương tiện cỡ lớn là <code>Truck</code> và <code>Bus</code> mà trọng số KITTI chưa từng được học trực tiếp.</p>
+<figure class="lab-figure"><img src="walkthrough_images/diagram_01_vf_axes_kitti.jpg" alt="Sơ đồ đối chiếu hệ trục LiDAR VF và khung tọa độ KITTI của PointPillars" onclick="openLightbox(this)" /><figcaption>Phép đổi trục trong vf_pp/core.py đưa đám mây điểm VF về hướng nhìn của model KITTI.</figcaption></figure>
+<h4 id="deep-cp1-giai-nghia-vung-phu-4-luot-xoay-va-cong-thuc-chi-phi-sua" class="deep-h">Giải nghĩa vùng phủ 4 lượt xoay và công thức chi phí sửa</h4>
+<p>Vì model chỉ nhìn vùng 90° phía trước (<code>x</code> trong <code>0–69.12 m</code>, <code>|y| &lt; 39.68 m</code>), hàm <code>Detector.raw_detect</code> trong <code>vf_pp/core.py</code> thực hiện <strong>4 lượt xoay tuần tự (<code>passes = 4</code>)</strong> ở <code>0°</code>, <code>90°</code>, <code>180°</code>, <code>270°</code> (bỏ qua an toàn lượt không có điểm), rồi gộp hộp bằng NMS không phân lớp (<code>merge_nms_thr = 0.1</code>). Vòng tròn chấm điểm bán kính <code>50.0 m</code> (<code>MAX_RANGE = 50.0</code>) nằm gọn bên trong hợp bốn khung xoay này.</p>
+<figure class="lab-figure"><img src="walkthrough_images/diagram_02_model_range_50m.jpg" alt="Sơ đồ vùng nhìn BEV bốn lượt xoay bao trọn vòng tròn đỏ 50 m" onclick="openLightbox(this)" /><figcaption>Hợp 4 lượt xoay phủ kín vòng tròn chấm điểm 50 m; giảm passes=1 sẽ sót hai bên xe.</figcaption></figure>
+<p>Chất lượng pre-label được đo trong bán kính <code>50.0 m</code> bằng <strong><code>correction_cost = 0.3·xóa + 1.0·thêm + 0.5·sửa</code></strong> sau khi ghép 1–1 theo Hungarian (<code>BEV IoU &gt;= 0.3</code>). Hàm <code>needs_edit</code> kiểm tra <code>yaw</code> theo chu kỳ <code>π</code>, nên box ngược đầu đúng 180° không tính là &quot;sửa&quot; nếu lớp, tâm và cạnh đã đạt.</p>
+<div class="tw"><table class="deep-table"><thead><tr><th>Thao tác (trọng số)</th><th>Điều kiện tính trong <code>correction_cost</code> (<code>MAX_RANGE = 50.0 m</code>)</th><th>Tác động khi sửa trên CVAT</th></tr></thead><tbody><tr><td><strong>Xóa (<code>0.3</code>)</strong></td><td>Box dự đoán dư không ghép được cặp với <code>gt</code> (<code>BEV IoU &lt; 0.3</code>)</td><td>Bấm <code>Remove</code> hoặc <code>Delete</code> rất nhanh nên phạt nhẹ nhất</td></tr><tr><td><strong>Thêm (<code>1.0</code>)</strong></td><td>Box thật trong <code>gt</code> bị model bỏ sót hoàn toàn</td><td>Phải vẽ cuboid mới và kéo lại 3 mặt cắt nên phạt nặng nhất</td></tr><tr><td><strong>Sửa (<code>0.5</code>)</strong></td><td>Cặp khớp (<code>BEV IoU &gt;= 0.3</code>) nhưng sai lớp, lệch tâm <code>&gt; 0.3 m</code>, lệch cạnh <code>&gt; 0.2 m</code>, hoặc lệch <code>yaw &gt; 10°</code> (mod <code>π</code>)</td><td>Kéo khung <code>Top/Side/Front</code> hoặc gõ <code>L/W/H</code>, đổi nhãn trên <code>DETAILS</code></td></tr></tbody></table></div>
+<h4 id="deep-cp1-lua-chon-thiet-ke-ba-nhom-tham-so-cau-hinh-trong-vf-pp-core-py-config" class="deep-h">Lựa chọn thiết kế: ba nhóm tham số cấu hình trong <code>vf_pp/core.py:Config</code></h4>
+<p>Các tham số trong <code>vf_pp/core.py:Config</code> được tách thành ba nhóm để bạn can thiệp đúng tầng khi tinh chỉnh. Nhóm <strong>A</strong> đưa điểm VF về lưới KITTI: luôn giữ <code>voxel_size = 0.16</code> khớp weights đã huấn luyện và giữ <code>passes = 4</code> để phủ đủ <code>360°</code>, vì thay đổi hai tham số này làm tụt chất lượng ngay lập tức. Nhóm <strong>B</strong> đặt ngưỡng tin cậy chung (<code>score_thr</code>) hoặc theo lớp (<code>thr_car</code>, <code>thr_cyc</code>, <code>thr_ped</code>) cùng NMS nội bộ. Nhóm <strong>C</strong> hậu xử lý trên không gian VF: lọc <code>min_points</code>, nới hộp <code>size_pad_m</code> và đổi <code>Car</code> cỡ lớn thành <code>Truck</code>/<code>Bus</code> qua <code>vf_class</code>. Khi thử nhanh, dùng cờ <code>--set KEY=VALUE</code>; khi chốt cấu hình ổn định, lưu file JSON và truyền qua <code>--config</code>.</p>
+<div class="tw"><table class="deep-table"><thead><tr><th>Nhóm</th><th>Tham số chính (mặc định)</th><th>Ý nghĩa và phạm vi tác động</th></tr></thead><tbody><tr><td>A. Đầu vào model</td><td><code>voxel_size</code> (<code>0.16</code>), <code>intensity_mode</code> (<code>clip</code>/<code>log</code>/<code>const</code>), <code>intensity_scale</code> (<code>1.0</code>), <code>ground_mode</code> (<code>fixed</code>/<code>auto</code>), <code>delta_z</code> (<code>0.0</code>), <code>passes</code> (<code>4</code>)</td><td>Quy đổi điểm VF về miền KITTI; đổi <code>voxel_size</code> khỏi <code>0.16</code> làm sai lệch lưới mà weights đã học, giảm <code>passes</code> làm mất vùng nhìn</td></tr><tr><td>B. Đầu ra model</td><td><code>score_thr</code> (<code>0.1</code>), <code>thr_car</code>/<code>thr_cyc</code>/<code>thr_ped</code> (<code>None</code>), <code>nms_thr</code> (<code>0.01</code>), <code>nms_pre</code> (<code>100</code>), <code>max_num</code> (<code>50</code>)</td><td>Lọc box theo độ tin cậy chung hoặc riêng từng lớp và đặt ngưỡng NMS bên trong mạng</td></tr><tr><td>C. Hậu xử lý VF</td><td><code>range_m</code> (<code>50.0</code>), <code>min_points</code> (<code>0</code>), <code>merge_nms_thr</code> (<code>0.1</code>), <code>size_pad_m</code> (<code>0.1</code>), <code>truck_l_min</code> (<code>5.6</code>), <code>truck_h_min</code> (<code>2.4</code>), <code>bus_l_min</code> (<code>9.0</code>), <code>bus_h_min</code> (<code>2.8</code>)</td><td>Cắt bán kính giữ box, lọc box quá ít điểm LiDAR (<code>min_points</code>), nới kích thước (<code>size_pad_m</code>) và đổi nhãn <code>Car</code> dài/cao thành <code>Truck</code> hoặc <code>Bus</code> theo luật kích thước</td></tr></tbody></table></div>
+<h4 id="deep-cp1-cac-buoc-thuc-hien-pha-1" class="deep-h">Các bước thực hiện Pha 1</h4>
+<p>Bạn chạy thử model trên 6 frame chung của buổi giảng trong <code>demo/frames_lec.txt</code> (<code>s02f07</code>, <code>s03f15</code>, <code>s05f40</code>, <code>s01f39</code>, <code>s03f18</code>, <code>s05f09</code>) theo cấu hình gốc, rồi thử ghi đè hai tham số <code>--set score_thr=0.4 --set min_points=5</code> để quan sát trực tiếp hiệu ứng đánh đổi giữa xóa box thừa và làm rơi box thật.</p>
+<div class="code-tabs"><div class="code-tabs-bar"><span class="code-tabs-title">Chạy pre-label 6 frame buổi giảng với cấu hình gốc và cấu hình thử ngưỡng</span><div class="tab-btns"><button type="button" class="tab-btn active" onclick="switchTab(this, 0)">Windows (PowerShell)</button><button type="button" class="tab-btn" onclick="switchTab(this, 1)">macOS / Linux (Bash)</button></div></div><div class="tab-panel active"><div class="cmd"><pre><span class="cm"># Windows (PowerShell)
+</span>python pp_prelabel.py --data &quot;&lt;Data-VF&gt;&quot; --frames demo/frames_lec.txt --out out/lec.json --plot out/lec_png
+python pp_prelabel.py --data &quot;&lt;Data-VF&gt;&quot; --frames demo/frames_lec.txt --set score_thr=0.4 --set min_points=5</pre><button type="button" onclick="copyPre(this)">Copy</button></div></div><div class="tab-panel"><div class="cmd"><pre><span class="cm"># macOS / Linux (Bash)
+</span>python pp_prelabel.py --data &quot;&lt;Data-VF&gt;&quot; --frames demo/frames_lec.txt --out out/lec.json --plot out/lec_png
+python pp_prelabel.py --data &quot;&lt;Data-VF&gt;&quot; --frames demo/frames_lec.txt --set score_thr=0.4 --set min_points=5</pre><button type="button" onclick="copyPre(this)">Copy</button></div></div></div>
+<ol class="deep-ol">
+<li>Chạy lệnh đầu tiên để xuất danh sách box <code>out/lec.json</code> và vẽ 6 ảnh tổng hợp <code>out/lec_png/*.jpg</code> (mỗi ảnh gồm 7 góc camera và bản đồ BEV bán kính <code>50 m</code>).</li>
+<li>Mở ảnh <code>out/lec_png/s05f40.jpg</code> cùng các frame còn lại để đối chiếu box trên camera với vị trí vòng tròn BEV: ghi nhận model nhận xe con gần khá ổn, nhưng dễ gán nhầm xe buýt lớn thành nhiều hộp nhỏ, bắn nhầm hộp giả vào hàng cây/bụi rậm, hoặc bỏ sót <code>Pedestrian</code> và <code>Cyclist</code> ở xa.</li>
+</ol>
+<figure class="lab-figure"><img src="walkthrough_images/cli_03_lec_prelabel_s05f40.jpg" alt="Ảnh 7 camera và BEV 50 m của frame s05f40 với 35 cuboid pre-label" onclick="openLightbox(this)" /><figcaption>Ảnh out/lec_png/s05f40.jpg hiển thị 7 camera và BEV vòng đỏ 50 m kèm mã pp_id.</figcaption></figure>
+<ol class="deep-ol" start="3">
+<li>Chạy lệnh thứ hai với <code>--set score_thr=0.4 --set min_points=5</code> và so sánh số lượng box in trên terminal (chẳng hạn ở <code>s05f40</code> giảm từ <code>35</code> box xuống còn <code>20</code> box): quan sát xem những box biến mất là nhiễu trong lùm cây/hàng rào hay là phương tiện thật ở vành ngoài.</li>
+</ol>
+<h4 id="deep-cp1-checkpoint-pha-1-va-chuyen-sang-buoi-chieu" class="deep-h">Checkpoint Pha 1 và chuyển sang buổi chiều</h4>
+<p>Pha 1 hoàn thành khi bạn đọc được cả hai đầu ra terminal của 6 frame buổi giảng, mở đủ 6 ảnh <code>out/lec_png/*.jpg</code> và giải thích được vì sao hệ số phạt <code>1.0</code> cho mỗi box bị sót lớn hơn gấp ba lần hệ số <code>0.3</code> cho mỗi box thừa. Hiểu rõ quy luật đánh đổi này là nền tảng trực tiếp cho việc sửa tay nhãn tham chiếu tập A ở Pha 2 và đưa ra dự đoán trước khi chạy sweep ở Pha 3.</p></div>
+<div class="deep-panel" data-deep-id="break"><p>Dành <strong>10 phút nghỉ giải lao</strong> rời màn hình trước khi bước vào Pha 3. Trước giờ quay lại, bảo đảm đã lưu <code>d14_&lt;ID&gt;/ref_A.json</code> khớp đúng số <code>Items</code> trên CVAT và sẵn sàng ghi 2 dòng dự đoán Bước 5b.</p></div>
+<div class="deep-panel" data-deep-id="cp2"><h4 id="deep-cp2-ban-chat-van-de-tach-tap-tune-a-va-tap-nop-b-bang-ma-hoc-vien-seed" class="deep-h">Bản chất vấn đề: tách tập tune (A) và tập nộp (B) bằng mã học viên + SEED</h4>
+<p>Ngay khi phần thực hành buổi chiều bắt đầu, giảng viên sẽ công bố một chuỗi <code>&lt;SEED&gt;</code> chung cho buổi học. Lệnh <code>vf_cvat.py day14</code> kết hợp <code>&lt;SEED&gt;</code> với mã học viên <code>&lt;ID&gt;</code> qua hàm băm SHA-256 (<code>d14:&lt;SEED&gt;:&lt;ID&gt;</code>) để sinh hai danh sách frame hoàn toàn riêng cho từng người: <strong>tập A (<code>frames_A.txt</code>) gồm 3 frame</strong> thuộc 3 sequence khác nhau để tinh chỉnh tham số, và <strong>tập B (<code>frames_B.txt</code>) gồm 12 frame</strong> trải trên 4 sequence (3 frame mỗi sequence, cách nhau tối thiểu 15 frame) dùng cho bài nộp cuối. Các frame được tự động lọc tránh toàn bộ 6 frame buổi giảng, tránh 10 frame Day 13 của chính bạn, đồng thời mỗi frame tập A luôn cách mọi frame tập B cùng sequence ít nhất 6 chỉ số để tránh rò rỉ dữ liệu khi tinh chỉnh.</p>
+<h4 id="deep-cp2-giai-nghia-quy-tac-ma-hoc-vien-co-so-0-dau-bom-va-co-org" class="deep-h">Giải nghĩa quy tắc mã học viên có số 0 đầu, BOM và cờ <code>--org</code></h4>
+<p>Giữ đúng ba quy ước kỹ thuật sau trước khi chạy lệnh ở Pha 2:</p>
+<ul class="plain">
+<li><strong>Giữ số <code>0</code> đầu mã <code>&lt;ID&gt;</code>:</strong> <code>vf_common.normalize_student</code> chỉ viết hoa chữ, nên <code>&quot;001&quot;</code> và <code>&quot;01&quot;</code> tạo hai bộ frame và hai thư mục (<code>d14_001/</code> vs <code>d14_01/</code>) khác nhau; trên PowerShell luôn bọc <code>--student &quot;001&quot;</code>.</li>
+<li><strong>Không lưu đè <code>.json</code> bằng Notepad BOM:</strong> repo đã chịu BOM ở <code>frames_*.txt</code> và <code>--config</code>, nhưng <code>pred_*.json</code> và <code>ref_*.json</code> vẫn đọc <code>utf-8</code> thuần nên sẽ lỗi nếu lưu đè bằng Notepad UTF-8 BOM.</li>
+<li><strong>Cờ <code>--org &lt;SLUG&gt;</code> là tùy chọn:</strong> bỏ hẳn <code>--org</code> khi chạy CVAT Docker local (<code>http://localhost:8080</code>, tránh lỗi 404); chỉ truyền thống nhất ở Bước 3 và 5 khi server lớp có organization.</li>
+</ul>
+<h4 id="deep-cp2-lua-chon-thiet-ke-chinh-sua-tren-pre-label-thay-vi-ve-lai-tu-dau-va-bay-shape-vs-track" class="deep-h">Lựa chọn thiết kế: chỉnh sửa trên pre-label thay vì vẽ lại từ đầu và bẫy <code>Shape</code> vs <code>Track</code></h4>
+<p>Bước 4 trên CVAT 3D mất khoảng 45 phút vì bạn <strong>chỉnh vừa đủ từ pre-label</strong> theo chuẩn Day 13 để tạo <code>ref_A.json</code> trung thực, thay vì xóa làm lại từ đầu. Các hộp pre-label có sẵn bốn thuộc tính <code>pp_id</code>, <code>score</code>, <code>warn</code> (cảnh báo kích thước theo <code>SIZE_RANGE</code>) và <code>note</code> giúp đối chiếu với ảnh BEV. Khi vẽ thêm hộp bị sót, CVAT đặt nút <strong><code>Shape</code></strong> cạnh <strong><code>Track</code></strong>. Vì <code>vf_cvat.py reference</code> chỉ đọc <code>shapes</code> và <strong>bỏ qua <code>tracks</code></strong> (kèm cảnh báo <code>stderr</code>), luôn bấm <strong><code>Shape</code></strong>.</p>
+<div class="callout callout-warning"><div class="callout-title">Cảnh báo bắt buộc: luôn chọn Shape (KHÔNG chọn Track) và đối chiếu Items</div><div class="callout-body"><p>Khi thêm cuboid bị sót trên CVAT 3D, chỉ bấm <strong><code>Shape</code></strong>, tuyệt đối không bấm <strong><code>Track</code></strong>. Sau khi bấm <strong>Save</strong>, kiểm tra số hộp mà <code>vf_cvat.py reference</code> in cho từng frame phải khớp chỉ số <strong><code>Items</code></strong> trên CVAT.</p></div></div>
+<h4 id="deep-cp2-cac-buoc-thuc-hien-buoc-1-5-tap-a" class="deep-h">Các bước thực hiện Bước 1–5 (Tập A)</h4>
+<p>Chạy lần lượt Bước 1 (sinh frame), Bước 2 (pre-label + ảnh BEV), Bước 3 (đẩy <code>D14-&lt;ID&gt;-A</code>) và Bước 5 (kéo <code>ref_A.json</code>) sau khi hoàn tất Bước 4. Mật khẩu CVAT nhập qua <code>CVAT_PASSWORD</code> hoặc gõ tại dấu nhắc, không ghi ra file.</p>
+<div class="code-tabs"><div class="code-tabs-bar"><span class="code-tabs-title">Thực hiện Bước 1, 2, 3 và 5 cho Tập A (thay mã học viên, SEED và đường dẫn dữ liệu)</span><div class="tab-btns"><button type="button" class="tab-btn active" onclick="switchTab(this, 0)">Windows (PowerShell)</button><button type="button" class="tab-btn" onclick="switchTab(this, 1)">macOS / Linux (Bash)</button></div></div><div class="tab-panel active"><div class="cmd"><pre><span class="cm"># Windows (PowerShell)
+</span>python vf_cvat.py day14 --student &quot;&lt;ID&gt;&quot; --seed &quot;&lt;SEED&gt;&quot; --data &quot;&lt;Data-VF&gt;&quot;
+python pp_prelabel.py --data &quot;&lt;Data-VF&gt;&quot; --frames &quot;d14_&lt;ID&gt;/frames_A.txt&quot; --out &quot;d14_&lt;ID&gt;/pred_A.json&quot; --plot &quot;d14_&lt;ID&gt;/png_A&quot;
+python vf_cvat.py prelabel --student &quot;&lt;ID&gt;&quot; --task A --data &quot;&lt;Data-VF&gt;&quot; --boxes &quot;d14_&lt;ID&gt;/pred_A.json&quot; --host http://localhost:8080 --user &quot;&lt;ten&gt;&quot;
+# ... Sửa tay tập A trên CVAT 3D (Bước 4) và bấm Save ...
+python vf_cvat.py reference --student &quot;&lt;ID&gt;&quot; --task A --host http://localhost:8080 --user &quot;&lt;ten&gt;&quot;
+python pp_prelabel.py --data &quot;&lt;Data-VF&gt;&quot; --frames &quot;d14_&lt;ID&gt;/frames_A.txt&quot; --gt &quot;d14_&lt;ID&gt;/ref_A.json&quot;</pre><button type="button" onclick="copyPre(this)">Copy</button></div></div><div class="tab-panel"><div class="cmd"><pre><span class="cm"># macOS / Linux (Bash)
+</span>python vf_cvat.py day14 --student &quot;&lt;ID&gt;&quot; --seed &quot;&lt;SEED&gt;&quot; --data &quot;&lt;Data-VF&gt;&quot;
+python pp_prelabel.py --data &quot;&lt;Data-VF&gt;&quot; --frames &quot;d14_&lt;ID&gt;/frames_A.txt&quot; --out &quot;d14_&lt;ID&gt;/pred_A.json&quot; --plot &quot;d14_&lt;ID&gt;/png_A&quot;
+python vf_cvat.py prelabel --student &quot;&lt;ID&gt;&quot; --task A --data &quot;&lt;Data-VF&gt;&quot; --boxes &quot;d14_&lt;ID&gt;/pred_A.json&quot; --host http://localhost:8080 --user &quot;&lt;ten&gt;&quot;
+# ... Sửa tay tập A trên CVAT 3D (Bước 4) và bấm Save ...
+python vf_cvat.py reference --student &quot;&lt;ID&gt;&quot; --task A --host http://localhost:8080 --user &quot;&lt;ten&gt;&quot;
+python pp_prelabel.py --data &quot;&lt;Data-VF&gt;&quot; --frames &quot;d14_&lt;ID&gt;/frames_A.txt&quot; --gt &quot;d14_&lt;ID&gt;/ref_A.json&quot;</pre><button type="button" onclick="copyPre(this)">Copy</button></div></div></div>
+<ol class="deep-ol">
+<li><strong>Bước 1 — Sinh danh sách frame:</strong> Chạy <code>vf_cvat.py day14</code> tạo <code>d14_&lt;ID&gt;/frames_A.txt</code> và <code>frames_B.txt</code>; kiểm tra dòng <code>seed_tag=</code> khớp hạt giống buổi học.</li>
+<li><strong>Bước 2 — Pre-label Tập A:</strong> Chạy <code>pp_prelabel.py</code> tạo <code>pred_A.json</code> và 3 ảnh <code>d14_&lt;ID&gt;/png_A/*.jpg</code> để xem trước vùng thừa/sót.</li>
+</ol>
+<figure class="lab-figure"><img src="walkthrough_images/cli_01_prelabel_7cam_bev_s02f45.jpg" alt="Ảnh pre-label tập A trên s02f45 gồm 7 camera và BEV 50 m" onclick="openLightbox(this)" /><figcaption>Ảnh d14_001/png_A/s02f45.jpg ở Bước 2 giúp rà nhanh 7 camera và BEV trước khi lên CVAT.</figcaption></figure>
+<ol class="deep-ol" start="3">
+<li><strong>Bước 3 — Đẩy task lên CVAT:</strong> Chạy <code>vf_cvat.py prelabel --task A</code> (bỏ <code>--org</code> trên Docker local). Mở trang <strong>Tasks</strong>, vào <code>D14-&lt;ID&gt;-A</code> kiểm tra đủ 5 nhãn (<code>Car</code>, <code>Truck</code>, <code>Bus</code>, <code>Cyclist</code>, <code>Pedestrian</code>) và đúng 3 frame.</li>
+</ol>
+<figure class="lab-figure"><img src="walkthrough_images/cvat_01_tasks_list_A.png" alt="Trang Tasks trên CVAT hiển thị task D14-001-A đã được tạo" onclick="openLightbox(this)" /><figcaption>Trang Tasks sau Bước 3: task D14-001-A xuất hiện kèm trạng thái 1 annotating.</figcaption></figure>
+<figure class="lab-figure"><img src="walkthrough_images/cvat_02_task_details_A.png" alt="Chi tiết Task D14-001-A với 5 nhãn cuboid và 1 Job 3 frame" onclick="openLightbox(this)" /><figcaption>Trang chi tiết Task: 5 nhãn cuboid và Job gồm đúng 3 frame tập A.</figcaption></figure>
+<ol class="deep-ol" start="4">
+<li><strong>Bước 4 — Sửa tay 3 frame trên CVAT 3D (~45 phút):</strong> Mở Job ở <code>Standard 3D</code> và thực hiện đủ bốn thao tác chuẩn hóa:
+<div class="sub-li">• <strong>Kiểm tra thuộc tính:</strong> Bảng phải hiện camera, cây <code>Objects</code> (<code>Items</code>) và <code>DETAILS</code> (<code>L/W/H</code>, <code>pp_id</code>, <code>score</code>, <code>warn</code>, <code>note</code>).</div></li>
+</ol>
+<figure class="lab-figure"><img src="walkthrough_images/cvat_03_3d_editor_initial.png" alt="Không gian CVAT 3D trên s02f45.pcd với 46 cuboid và 3 mặt cắt" onclick="openLightbox(this)" /><figcaption>Giao diện CVAT 3D ở Bước 4: khung 3D trên cùng và 3 mặt cắt Top/Side/Front bên dưới.</figcaption></figure>
+<figure class="lab-figure"><img src="walkthrough_images/cvat_04_object_details_attrs.png" alt="Thẻ đối tượng Car mở DETAILS hiển thị L W H và 4 thuộc tính" onclick="openLightbox(this)" /><figcaption>Mục DETAILS hiển thị L/W/H cùng bốn thuộc tính pp_id, score, warn, note do tool tạo sẵn.</figcaption></figure>
+<div class="sub-li" style="padding-left:28px;margin:8px 0">• <strong>Sửa box lệch/sai lớp:</strong> Kéo các điểm đỏ ở <code>Top / Side / Front</code> hoặc gõ <code>L/W/H</code>, rồi đổi nhãn đúng (<code>Car</code> → <code>Truck</code>/<code>Bus</code>).</div>
+<figure class="lab-figure"><img src="walkthrough_images/cvat_05_edit_length_4_23.png" alt="Chỉnh chiều dài L của cuboid Car từ 3.78 thành 4.23 trong DETAILS" onclick="openLightbox(this)" /><figcaption>Sửa kích thước hộp bằng cách gõ số vào L/W/H hoặc kéo các điểm điều chỉnh trên khung cắt.</figcaption></figure>
+<div class="sub-li" style="padding-left:28px;margin:8px 0">• <strong>Xóa box thừa:</strong> Bấm <code>⋮ → Remove</code> trên thẻ đối tượng (hoặc <code>Delete</code>), kiểm tra <code>Items</code> giảm đi 1.</div>
+<figure class="lab-figure"><img src="walkthrough_images/cvat_06_delete_menu_obj2.png" alt="Mở menu ba chấm trên đối tượng số 2 chọn Remove xóa hộp thừa" onclick="openLightbox(this)" /><figcaption>Bấm nút ba chấm ở góc thẻ đối tượng và chọn Remove để xóa hộp dự đoán sai.</figcaption></figure>
+<figure class="lab-figure"><img src="walkthrough_images/cvat_07_after_delete_45_items.png" alt="Bảng Objects sau khi xóa hiển thị chỉ số Items giảm từ 46 xuống 45" onclick="openLightbox(this)" /><figcaption>Sau khi xóa một box thừa trên s02f45, chỉ số Items giảm ngay từ 46 xuống 45.</figcaption></figure>
+<div class="sub-li" style="padding-left:28px;margin:8px 0">• <strong>Thêm box sót bằng <code>Shape</code> và Save:</strong> Chọn icon lập phương, bấm <strong><code>Shape</code></strong> (KHÔNG <code>Track</code>), <strong>double-click</strong> khung 3D, căn 3 mặt cắt <code>Top / Side / Front</code>, rồi bấm <strong><code>Save</code></strong> tới khi nút mờ đi.</div>
+<figure class="lab-figure"><img src="walkthrough_images/cvat_08_draw_cuboid_shape_vs_track.png" alt="Popup Draw new cuboid hiển thị hai nút Shape và Track cạnh nhau" onclick="openLightbox(this)" /><figcaption>Khi vẽ hộp mới, luôn chọn Shape (trái) và tránh Track (phải) để reference không bỏ sót.</figcaption></figure>
+<figure class="lab-figure"><img src="walkthrough_images/cvat_09_add_bus_shape_46_items.png" alt="Thêm thành công đối tượng #101 Bus dạng CUBOID SHAPE đạt 46 Items" onclick="openLightbox(this)" /><figcaption>Đối tượng #101 nhãn Bus tạo bằng CUBOID SHAPE làm tổng Items tăng trở lại 46.</figcaption></figure>
+<figure class="lab-figure"><img src="walkthrough_images/cvat_10_saved_clean_46_items.png" alt="Màn hình CVAT sau khi bấm Save với đủ 46 cuboid dạng Shape" onclick="openLightbox(this)" /><figcaption>Bấm Save tới khi nút Save mờ đi trước khi chạy lệnh kéo nhãn tham chiếu về máy.</figcaption></figure>
+<ol class="deep-ol" start="5">
+<li><strong>Bước 5 — Kéo <code>ref_A.json</code> và đo baseline:</strong> Chạy <code>vf_cvat.py reference --task A</code> xuất <code>d14_&lt;ID&gt;/ref_A.json</code>, xác nhận số box khớp <code>Items</code> và 0 cảnh báo <code>Track</code> (thêm <code>--scale-order wlh</code> nếu server đảo L/W). Chạy tiếp <code>pp_prelabel.py ... --gt d14_&lt;ID&gt;/ref_A.json</code> ghi nhận chi phí gốc tập A.</li>
+</ol>
+<h4 id="deep-cp2-checkpoint-pha-2-va-gio-nghi-giai-lao-1-40-1-50-10-phut" class="deep-h">Checkpoint Pha 2 và giờ nghỉ giải lao (1:40 → 1:50 · 10 phút)</h4>
+<p>Pha 2 hoàn tất khi <code>d14_&lt;ID&gt;/</code> có đủ <code>frames_A.txt</code>, <code>frames_B.txt</code>, <code>pred_A.json</code> và <code>ref_A.json</code>, trong đó số hộp từ <code>vf_cvat.py reference --task A</code> khớp <code>100%</code> <code>Items</code> trên CVAT và không có cảnh báo <code>Track</code> trên <code>stderr</code>. Kết quả từ <code>pp_prelabel.py ... --gt d14_&lt;ID&gt;/ref_A.json</code> cho thấy chi phí trên tập A chủ yếu do xóa box thừa hay thêm vật sót. Sau đó nghỉ giải lao <strong>10 phút (1:40 → 1:50)</strong> và chuẩn bị hai dòng dự đoán Bước 5b trước Pha 3.</p></div>
+<div class="deep-panel" data-deep-id="cp3"><h4 id="deep-cp3-ban-chat-van-de-ghi-du-doan-truoc-khi-do-va-rui-ro-overfit-tren-3-frame" class="deep-h">Bản chất vấn đề: ghi dự đoán trước khi đo và rủi ro overfit trên 3 frame</h4>
+<p>Mục đích trọng tâm của Pha 3 là kiểm nghiệm trực giác kỹ thuật trước số liệu thực nghiệm và nhận diện giới hạn tổng quát hóa khi cỡ mẫu tinh chỉnh nhỏ. Ở <strong>Bước 5b</strong>, bạn bắt buộc viết hai dòng dự đoán vào báo cáo <em>trước</em> khi chạy lệnh quét <code>pp_sweep.py</code>: nhìn từ ảnh BEV và kết quả baseline trên tập A, tham số nào bạn cho rằng sẽ giảm công sửa nhiều nhất và vì sao (ví dụ: trên frame có nhiều box thừa rải rác ở xa/trong bụi cây thì tăng <code>score_thr</code> hay tăng <code>min_points</code> tác động mạnh hơn; còn nếu chi phí chủ yếu do thiếu box thì đổi ngưỡng chỉ giảm rất ít). Tiêu chí chấm điểm đánh giá tính trung thực khi đối chiếu dự đoán ở Bước 8, nên một dự đoán ban đầu sai nhưng được giải thích đúng bản chất sau khi chạy số liệu vẫn được ghi nhận đầy đủ.</p>
+<h4 id="deep-cp3-giai-nghia-co-che-cache-suy-luan-va-kiem-tra-cheo-leave-one-out" class="deep-h">Giải nghĩa cơ chế cache suy luận và kiểm tra chéo leave-one-out</h4>
+<p><code>pp_sweep.py</code> tách rạch ròi tham số mạng (<code>MODEL_KNOBS</code>: <code>voxel_size</code>, <code>intensity_mode</code>, <code>intensity_scale</code>, <code>ground_mode</code>, <code>delta_z</code>, <code>passes</code>, <code>nms_thr</code>, <code>nms_pre</code>, <code>max_num</code>) khỏi tham số hậu xử lý (<code>score_thr</code>, <code>min_points</code>, <code>range_m</code>). Với mỗi tổ hợp <code>MODEL_KNOBS</code>, model chỉ chạy một lần tại <code>score_thr = 0.05</code> rồi đệm kết quả trong RAM, nên lưới hậu xử lý chạy nhanh mà không tạo file tạm.</p>
+<p>Cuối lượt quét, <code>pp_sweep.py</code> in <strong>leave-one-out</strong>: chọn cấu hình tốt nhất trên 2 frame còn lại, chấm lên frame giữ ra và so với điểm <code>oracle</code> riêng frame đó. Nếu kết quả nhảy mạnh giữa các frame, <code>best_config.json</code> đang có nguy cơ overfit vào 3 frame tập A.</p>
+<h4 id="deep-cp3-lua-chon-thiet-ke-giu-moc-goc-0-1-trong-luoi-va-doc-anh-bev-52-m" class="deep-h">Lựa chọn thiết kế: giữ mốc gốc <code>0.1</code> trong lưới và đọc ảnh BEV <code>52 m</code></h4>
+<p>Khi truyền <code>--grid</code> cho <code>pp_sweep.py</code>, giữ hai quy tắc vận hành quan trọng: thứ nhất, luôn viết đủ dấu <code>=</code> dạng <code>key=vals</code> (bỏ thiếu <code>=</code> làm parser dừng và báo lỗi <code>--grid ...: không có tham số này</code>); thứ hai, luôn giữ mức mặc định <code>score_thr=0.1</code> cùng <code>min_points=0</code> trong lưới làm đối chứng để thuật toán không ép chọn <code>0.2</code> khi chi phí tăng. Ở Bước 8, <code>pp_compare.py</code> vẽ hai khung BEV cạnh nhau (<code>gốc</code> bên trái, <code>của bạn</code> bên phải) trong phạm vi <strong><code>±52 m</code></strong> kèm vòng đỏ <strong><code>50 m</code></strong> đúng phạm vi chấm <code>correction_cost</code>: <strong>xanh lá</strong> (giữ nguyên), <strong>vàng</strong> (cần sửa), <strong>đỏ</strong> (thừa, cần xóa) và <strong>xanh dương</strong> (sót, cần vẽ thêm).</p>
+<h4 id="deep-cp3-cac-buoc-thuc-hien-buoc-5b-6-va-8" class="deep-h">Các bước thực hiện Bước 5b, 6 và 8</h4>
+<div class="code-tabs"><div class="code-tabs-bar"><span class="code-tabs-title">Quét tham số Bước 6 và xuất ảnh đối chiếu trước/sau Bước 8</span><div class="tab-btns"><button type="button" class="tab-btn active" onclick="switchTab(this, 0)">Windows (PowerShell)</button><button type="button" class="tab-btn" onclick="switchTab(this, 1)">macOS / Linux (Bash)</button></div></div><div class="tab-panel active"><div class="cmd"><pre><span class="cm"># Windows (PowerShell)
+</span>python pp_sweep.py --data &quot;&lt;Data-VF&gt;&quot; --frames &quot;d14_&lt;ID&gt;/frames_A.txt&quot; --gt &quot;d14_&lt;ID&gt;/ref_A.json&quot; --grid score_thr=0.1,0.2,0.3,0.4,0.5 --grid min_points=0,5,10 --out &quot;d14_&lt;ID&gt;/sweep.csv&quot;
+python pp_compare.py --data &quot;&lt;Data-VF&gt;&quot; --frames &quot;d14_&lt;ID&gt;/frames_A.txt&quot; --gt &quot;d14_&lt;ID&gt;/ref_A.json&quot; --tuned &quot;d14_&lt;ID&gt;/best_config.json&quot; --out &quot;d14_&lt;ID&gt;/compare&quot;</pre><button type="button" onclick="copyPre(this)">Copy</button></div></div><div class="tab-panel"><div class="cmd"><pre><span class="cm"># macOS / Linux (Bash)
+</span>python pp_sweep.py --data &quot;&lt;Data-VF&gt;&quot; --frames &quot;d14_&lt;ID&gt;/frames_A.txt&quot; --gt &quot;d14_&lt;ID&gt;/ref_A.json&quot; --grid score_thr=0.1,0.2,0.3,0.4,0.5 --grid min_points=0,5,10 --out &quot;d14_&lt;ID&gt;/sweep.csv&quot;
+python pp_compare.py --data &quot;&lt;Data-VF&gt;&quot; --frames &quot;d14_&lt;ID&gt;/frames_A.txt&quot; --gt &quot;d14_&lt;ID&gt;/ref_A.json&quot; --tuned &quot;d14_&lt;ID&gt;/best_config.json&quot; --out &quot;d14_&lt;ID&gt;/compare&quot;</pre><button type="button" onclick="copyPre(this)">Copy</button></div></div></div>
+<ol class="deep-ol">
+<li><strong>Bước 5b:</strong> Ghi vào file báo cáo 2 dòng dự đoán của riêng bạn về tham số ảnh hưởng nhất và cơ chế tác động dựa trên các ảnh BEV ở Bước 2 và baseline ở Bước 5, tuyệt đối thực hiện trước khi chạy <code>pp_sweep.py</code>.</li>
+<li><strong>Bước 6:</strong> Chạy <code>pp_sweep.py</code> trên 15 cấu hình (<code>5 × 3</code> trên tập A) để xuất <code>d14_&lt;ID&gt;/sweep.csv</code> và <code>d14_&lt;ID&gt;/best_config.json</code>. Đọc bảng Top 10 và phần <strong>Leave-one-out</strong> in ra terminal để đánh giá độ ổn định của cấu hình tốt nhất.</li>
+<li><strong>Bước 8:</strong> Chạy <code>pp_compare.py</code> để tính phần trăm thay đổi công sửa và tạo ảnh BEV <code>d14_&lt;ID&gt;/compare/*.jpg</code>. Chọn một ảnh so sánh tiêu biểu đưa vào báo cáo kèm nhận xét thẳng thắn: dự đoán Bước 5b đúng hay sai so với số đo thực tế, và phần trăm giảm được trên tập A là bao nhiêu (thông thường chỉ giảm khiêm tốn vài phần trăm vì giới hạn miền KITTI ở box bị sót; nếu chạy kiểm thử trên nhãn chỉ chỉnh nhẹ thì cấu hình gốc <code>0.1</code> có thể giữ nguyên chi phí như minh họa bên dưới).</li>
+</ol>
+<figure class="lab-figure"><img src="walkthrough_images/cli_02_compare_52m_bev_s02f45.jpg" alt="Ảnh pp_compare.py frame s02f45 phạm vi 52 m với vòng đỏ 50 m" onclick="openLightbox(this)" /><figcaption>Ảnh d14_001/compare/s02f45.jpg: bản đồ BEV 52 m kèm vòng đỏ 50 m đối chiếu gốc và tuned.</figcaption></figure>
+<h4 id="deep-cp3-checkpoint-pha-3-va-chuyen-sang-tap-b" class="deep-h">Checkpoint Pha 3 và chuyển sang Tập B</h4>
+<p>Bạn kết thúc Pha 3 khi trong <code>d14_&lt;ID&gt;/</code> đã có đủ <code>sweep.csv</code>, <code>best_config.json</code>, bộ ảnh <code>compare/*.jpg</code>, và báo cáo đã ghi đủ hai dòng dự đoán Bước 5b kèm đối chiếu số liệu thực tế ở Bước 8 và nhận định <code>leave-one-out</code>. Hãy đọc lại mức chênh lệch giữa cấu hình được chọn trên 2 frame còn lại với điểm <code>oracle</code> của từng frame: nếu thấy kết quả dao động mạnh hoặc <code>best_config.json</code> làm tệ hơn trên một frame, bạn có thể rà soát lại tham số ở nhóm A/B/C trước khi áp dụng cấu hình đó lên 12 frame độc lập của Tập B ở Pha 4.</p></div>
+<div class="deep-panel" data-deep-id="cp4"><h4 id="deep-cp4-ban-chat-van-de-kiem-chung-tren-12-frame-doc-lap-va-trach-nhiem-trung-thuc-voi-du-lieu" class="deep-h">Bản chất vấn đề: kiểm chứng trên 12 frame độc lập và trách nhiệm trung thực với dữ liệu</h4>
+<p>Trong thực tế triển khai dữ liệu, một bộ siêu tham số chỉ có giá trị khi vượt qua bài kiểm tra trên dữ liệu mới chưa từng tham gia quá trình tinh chỉnh. <strong>Tập B (<code>frames_B.txt</code>, 12 frame trải đều trên 4 sequence)</strong> chính là sản phẩm bàn giao trọng tâm của Day 14. Ở Pha 4, bạn dùng <code>d14_&lt;ID&gt;/best_config.json</code> để sinh pre-label cho 12 frame tập B, đẩy lên CVAT thành task <code>D14-&lt;ID&gt;-B</code>, rồi tự mình rà và sửa toàn bộ 12 frame trên giao diện CVAT 3D. Nguyên tắc cốt lõi cần tuân thủ là <strong>mọi box nộp phải được con người kiểm chứng; tuyệt đối không nộp thẳng box của model</strong>, đặc biệt là các đối tượng <code>Pedestrian</code>, <code>Cyclist</code> bị sót ở xa và các phương tiện <code>Truck</code>, <code>Bus</code> cần sửa đúng lớp từ nhãn <code>Car</code> của KITTI.</p>
+<h4 id="deep-cp4-giai-nghia-quy-trinh-xuat-ref-b-json-tren-cvat-local-va-cau-truc-goi-nop" class="deep-h">Giải nghĩa quy trình xuất <code>ref_B.json</code> trên CVAT local và cấu trúc gói nộp</h4>
+<p>Khi dùng CVAT Docker trên máy cá nhân (<code>http://localhost:8080</code>), giảng viên không thể truy cập <code>localhost</code> của bạn để chấm task <code>D14-&lt;ID&gt;-B</code>. Vì vậy, sau khi sửa đủ 12 frame và bấm <strong>Save</strong>, bạn bắt buộc chạy <code>vf_cvat.py reference --student &quot;&lt;ID&gt;&quot; --task B</code> kéo toàn bộ nhãn về <strong><code>d14_&lt;ID&gt;/ref_B.json</code></strong>. Nếu lớp dùng server tập trung có organization, vẫn chạy lệnh xuất này để đối chiếu số hộp với <code>Items</code> và lưu đủ sản phẩm cục bộ.</p>
+<p>Thư mục <code>d14_&lt;ID&gt;/</code> đã nằm trong <code>.gitignore</code> để không push bài cá nhân lên GitHub chung. Khi nộp LMS, giữ nguyên số <code>0</code> đầu (ví dụ <code>d14_001/</code>) bên trong thư mục chuẩn <code>K5-DAY14-HoVaTen-MSSV/</code>.</p>
+<h4 id="deep-cp4-cac-buoc-thuc-hien-buoc-7-va-dong-goi-nop-bai" class="deep-h">Các bước thực hiện Bước 7 và đóng gói nộp bài</h4>
+<div class="code-tabs"><div class="code-tabs-bar"><span class="code-tabs-title">Bước 7: Pre-label Tập B bằng best_config.json, đẩy CVAT và xuất ref_B.json</span><div class="tab-btns"><button type="button" class="tab-btn active" onclick="switchTab(this, 0)">Windows (PowerShell)</button><button type="button" class="tab-btn" onclick="switchTab(this, 1)">macOS / Linux (Bash)</button></div></div><div class="tab-panel active"><div class="cmd"><pre><span class="cm"># Windows (PowerShell)
+</span>python pp_prelabel.py --data &quot;&lt;Data-VF&gt;&quot; --frames &quot;d14_&lt;ID&gt;/frames_B.txt&quot; --config &quot;d14_&lt;ID&gt;/best_config.json&quot; --out &quot;d14_&lt;ID&gt;/pred_B.json&quot;
+python vf_cvat.py prelabel --student &quot;&lt;ID&gt;&quot; --task B --data &quot;&lt;Data-VF&gt;&quot; --boxes &quot;d14_&lt;ID&gt;/pred_B.json&quot; --host http://localhost:8080 --user &quot;&lt;ten&gt;&quot;
+# ... Mở task D14-&lt;ID&gt;-B trên CVAT 3D, sửa đủ 12 frame bằng Shape và bấm Save ...
+python vf_cvat.py reference --student &quot;&lt;ID&gt;&quot; --task B --host http://localhost:8080 --user &quot;&lt;ten&gt;&quot;</pre><button type="button" onclick="copyPre(this)">Copy</button></div></div><div class="tab-panel"><div class="cmd"><pre><span class="cm"># macOS / Linux (Bash)
+</span>python pp_prelabel.py --data &quot;&lt;Data-VF&gt;&quot; --frames &quot;d14_&lt;ID&gt;/frames_B.txt&quot; --config &quot;d14_&lt;ID&gt;/best_config.json&quot; --out &quot;d14_&lt;ID&gt;/pred_B.json&quot;
+python vf_cvat.py prelabel --student &quot;&lt;ID&gt;&quot; --task B --data &quot;&lt;Data-VF&gt;&quot; --boxes &quot;d14_&lt;ID&gt;/pred_B.json&quot; --host http://localhost:8080 --user &quot;&lt;ten&gt;&quot;
+# ... Mở task D14-&lt;ID&gt;-B trên CVAT 3D, sửa đủ 12 frame bằng Shape và bấm Save ...
+python vf_cvat.py reference --student &quot;&lt;ID&gt;&quot; --task B --host http://localhost:8080 --user &quot;&lt;ten&gt;&quot;</pre><button type="button" onclick="copyPre(this)">Copy</button></div></div></div>
+<ol class="deep-ol">
+<li>Chạy <code>pp_prelabel.py</code> với <code>--config d14_&lt;ID&gt;/best_config.json</code> trên <code>frames_B.txt</code> để sinh <code>d14_&lt;ID&gt;/pred_B.json</code>, sau đó đẩy lên CVAT tạo task <code>D14-&lt;ID&gt;-B</code> (12 frame). Kiểm tra trang <strong>Tasks</strong> trên CVAT hiển thị đủ cả hai task <code>D14-&lt;ID&gt;-A</code> và <code>D14-&lt;ID&gt;-B</code>.</li>
+</ol>
+<figure class="lab-figure"><img src="walkthrough_images/cvat_11_tasks_A_and_B.png" alt="Trang Tasks trên CVAT hiển thị đầy đủ cả task D14-001-A và D14-001-B" onclick="openLightbox(this)" /><figcaption>Trang Tasks trên CVAT sau khi tạo thành công cả task D14-001-A (3 frame) và D14-001-B (12 frame).</figcaption></figure>
+<ol class="deep-ol" start="2">
+<li>Mở toàn bộ 12 frame của task <code>D14-&lt;ID&gt;-B</code> trên CVAT 3D, sửa các hộp lệch/sai lớp, xóa hộp thừa, vẽ thêm mọi đối tượng bị sót trong bán kính <code>50 m</code> bằng <strong><code>Shape</code></strong> (tuyệt đối không bấm <code>Track</code>), rồi bấm <strong>Save</strong>.</li>
+<li>Chạy <code>vf_cvat.py reference --student &quot;&lt;ID&gt;&quot; --task B</code> để tạo <code>d14_&lt;ID&gt;/ref_B.json</code> (thêm <code>--org &lt;SLUG&gt;</code> nếu dùng server lớp có org). Kiểm tra terminal in đủ 12 frame với số box khớp đúng CVAT <code>Items</code> và không có cảnh báo <code>Track</code>.</li>
+<li>Hoàn thiện file báo cáo đặt trong <code>d14_&lt;ID&gt;/</code> (gồm: 2 dòng dự đoán Bước 5b, kết quả leave-one-out Bước 6, ít nhất 1 ảnh <code>compare/</code> kèm đối chiếu Bước 5b đúng hay sai ở Bước 8, và nhận xét trung thực giới hạn KITTI — không phóng đại % giảm hay quy đổi <code>cost</code> thành giờ công thật).</li>
+<li>Kiểm tra cấu trúc gói nộp đặt đúng tên <code>K5-DAY14-HoVaTen-MSSV/</code> (giữ nguyên số <code>0</code> đầu ở <code>d14_&lt;ID&gt;/</code>), nén thành file <code>.zip</code> (<code>K5-DAY14-HoVaTen-MSSV.zip</code>) và nộp lên LMS của lớp:</li>
+</ol>
+<div class="cmd"><pre><span class="cm"># Cấu trúc thư mục gói nộp LMS (tạo trước khi nén .zip)
+</span>K5-DAY14-HoVaTen-MSSV/
+└── d14_&lt;ID&gt;/                  # giữ số 0 đầu, ví dụ d14_001/
+    ├── frames_A.txt           # 3 frame tập A kèm seed_tag=
+    ├── frames_B.txt           # 12 frame tập B kèm seed_tag=
+    ├── pred_A.json            # pre-label gốc trên tập A
+    ├── pred_B.json            # pre-label dùng best_config.json (B)
+    ├── ref_A.json             # nhãn tham chiếu A đã sửa trên CVAT
+    ├── ref_B.json             # nhãn Tập B 12 frame kéo từ CVAT
+    ├── sweep.csv              # bảng quét lưới tham số Bước 6
+    ├── best_config.json       # cấu hình tốt nhất từ pp_sweep.py
+    ├── compare/               # ảnh BEV trước/sau 52 m (tập A)
+    └── &lt;bao_cao&gt;.md / .pdf    # báo cáo Bước 5b, 6, ảnh 8 &amp; nhận xét</pre><button type="button" onclick="copyPre(this)">Copy</button></div>
+<h4 id="deep-cp4-checkpoint-ban-giao-cuoi-bai-lab" class="deep-h">Checkpoint bàn giao cuối bài Lab</h4>
+<p>Trước khi nén file <code>.zip</code> nộp lên LMS, bạn đối chiếu lần cuối toàn bộ cây thư mục <code>K5-DAY14-HoVaTen-MSSV/d14_&lt;ID&gt;/</code> để bảo đảm đủ 10 đầu mục bắt buộc, giữ nguyên chữ số <code>0</code> đứng đầu mã học viên nếu có, và <code>seed_tag=</code> trong <code>frames_A.txt</code> / <code>frames_B.txt</code> còn nguyên vẹn để coach kiểm tra. Hãy kiểm lại rằng <code>ref_A.json</code> và <code>ref_B.json</code> lưu bằng UTF-8 thuần không BOM, số hộp từng frame khớp chỉ số <code>Items</code> trên CVAT mà không có hộp <code>Track</code>, báo cáo phản ánh trung thực giới hạn KITTI, và tuyệt đối không push <code>d14_&lt;ID&gt;/</code>, <code>&lt;SEED&gt;</code> dạng thô hay mật khẩu CVAT lên GitHub.</p>
+<div class="checklist-box checklist-success"><div class="checklist-title">Checklist bàn giao cuối bài Lab Day 14</div><ul class="chk"><li><input type="checkbox" onclick="this.closest('li').classList.toggle('checked', this.checked)"><span><code>frames_A.txt</code> và <code>frames_B.txt</code> giữ nguyên <code>seed_tag=</code> và mã <code>&lt;ID&gt;</code> có số <code>0</code> đầu.</span></li><li><input type="checkbox" onclick="this.closest('li').classList.toggle('checked', this.checked)"><span><code>ref_A.json</code> và <code>ref_B.json</code> khớp số <code>Items</code>, không cảnh báo <code>Track</code> và không BOM.</span></li><li><input type="checkbox" onclick="this.closest('li').classList.toggle('checked', this.checked)"><span><code>sweep.csv</code>, <code>best_config.json</code> và <code>compare/</code> chạy từ lưới có giữ mốc <code>0.1</code>.</span></li><li><input type="checkbox" onclick="this.closest('li').classList.toggle('checked', this.checked)"><span>Báo cáo đủ dự đoán 5b, leave-one-out, ảnh Bước 8 và đánh giá trung thực.</span></li><li><input type="checkbox" onclick="this.closest('li').classList.toggle('checked', this.checked)"><span>Nén đúng <code>K5-DAY14-HoVaTen-MSSV/d14_&lt;ID&gt;/</code> nộp LMS; không push <code>d14_&lt;ID&gt;/</code> hay mật khẩu lên Git.</span></li></ul></div></div>
+    </div>
+
+  <div class="ref" id="refSection">
+    <div class="refcard">
+      <h3>📏 Ngưỡng &amp; thông số cần nhớ (từ <code>vf_pp/core.py</code> &amp; <code>vf_d14.py</code>)</h3>
+      <table class="ref-thresh">
+        <tr><td>Phạm vi chấm điểm &amp; lọc BEV (<code>MAX_RANGE</code> / <code>range_m</code>)</td><td>≤ 50.0 m</td></tr>
+        <tr><td>Công thức chi phí sửa tay (<code>correction_cost</code>)</td><td>0.3·xóa + 1.0·thêm + 0.5·sửa</td></tr>
+        <tr><td>Ngưỡng ghép 1–1 dự đoán ↔ tham chiếu (Hungarian BEV IoU)</td><td>≥ 0.3</td></tr>
+        <tr><td>Điều kiện hộp khớp bị tính &quot;sửa&quot; (<code>needs_edit</code>)</td><td>sai lớp | tâm &gt; 0.3 m | cạnh &gt; 0.2 m | yaw &gt; 10° (mod π)</td></tr>
+        <tr><td>Số lượt xoay phủ 360° / vùng nhìn 1 lượt KITTI</td><td>passes = 4 (0–69.12 m, ±39.68 m)</td></tr>
+        <tr><td>Kích thước voxel mặc định khớp weights KITTI</td><td>voxel_size = 0.16 m</td></tr>
+        <tr><td>Số frame Tập A (tune) / Tập B (nộp)</td><td>3 frame (3 seq) / 12 frame (4×3, cách ≥ 15)</td></tr>
+        <tr><td>Khoảng cách tách Tập A khỏi Tập B cùng sequence</td><td>≥ 6 frame (tránh ±2 frame giảng &amp; D13)</td></tr>
+      </table>
+    </div>
+    <div class="refcard">
+      <h3>⚖️ Quy tắc vàng (quy chuẩn hiện hành)</h3>
+      <ul class="plain">
+        <li><b>Giữ nguyên mã <code>&lt;ID&gt;</code> có số 0 đầu:</b> <code>"001"</code> và <code>"01"</code> tạo ra hai bộ frame và hai thư mục (<code>d14_001/</code> vs <code>d14_01/</code>) hoàn toàn khác nhau; luôn bọc ngoặc kép trên PowerShell.</li>
+        <li><b>Không lưu đè <code>.json</code> bằng Notepad BOM:</b> bản <code>a5f6b9c</code> đã chịu BOM ở <code>frames_*.txt</code> và <code>--config</code>, nhưng <code>pred_*.json</code> / <code>ref_*.json</code> vẫn đọc <code>utf-8</code> thuần.</li>
+        <li><b>Chỉ vẽ mới bằng <code>Shape</code> (KHÔNG chọn <code>Track</code>):</b> <code>vf_cvat.py reference</code> chỉ đọc <code>shapes</code>, bỏ qua <code>tracks</code> và báo trên <code>stderr</code>. Luôn bấm <b>Save</b> và đối chiếu số <code>Items</code>.</li>
+        <li><b>Cờ <code>--org</code> là tùy chọn:</b> bỏ hẳn <code>--org</code> khi dùng CVAT Docker local (<code>http://localhost:8080</code>); chỉ truyền đồng bộ ở Bước 3 &amp; 5 nếu server lớp dùng organization.</li>
+        <li><b>Mọi box Tập B phải do người kiểm &amp; báo cáo trung thực:</b> không nộp thẳng box model, giữ mốc <code>0.1</code> và dấu <code>=</code> trong <code>--grid</code>, không gọi điểm <code>cost</code> là &quot;tiết kiệm giờ công thật&quot;.</li>
+        <li><b>Đóng gói đúng chuẩn nộp LMS:</b> xuất <code>ref_B.json</code>, đặt <code>d14_&lt;ID&gt;/</code> vào <code>K5-DAY14-HoVaTen-MSSV/</code> nén <code>.zip</code> nộp LMS; không push <code>d14_*/</code>, SEED hay mật khẩu lên Git.</li>
+      </ul>
+      <p class="kbd-hint" style="margin:12px 0 0;font-size:12.5px;color:var(--muted)">
+        Phím tắt: <span class="kbd">Space</span> chạy/dừng · <span class="kbd">←</span><span class="kbd">→</span> pha trước/sau ·
+        <span class="kbd">T</span> sáng/tối · <span class="kbd">P</span> trình chiếu · <span class="kbd">F</span> toàn màn hình
+      </p>
+    </div>
+    <div class="refcard wide">
+      <h3>🛠️ Bảng xử lý lỗi hay gặp khi chạy CLI, Docker &amp; CVAT</h3>
+      <table>
+        <tr><td>PowerShell 5.1 lỗi <code>&amp;&amp;</code>, <code>source</code> hoặc chặn <code>Activate.ps1</code></td><td>Chạy từng dòng lệnh riêng; chạy <code>Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass</code> rồi kích hoạt <code>.\.venv\Scripts\Activate.ps1</code> và đặt <code>$env:PYTHONUTF8 = "1"</code>.</td></tr>
+        <tr><td><code>setup_pp.py</code> lỗi read-only <code>.git</code> hoặc máy không có <code>git</code></td><td>Chạy <code>python setup_pp.py --download-zip</code>; nếu chạy lại trên bản clone cũ bị kẹt <code>third_party</code>, xóa bằng <code>Remove-Item -Recurse -Force third_party</code> rồi tải lại.</td></tr>
+        <tr><td>Lưu đè <code>.json</code> bằng Notepad BOM gây <code>JSONDecodeError</code></td><td>Không mở lưu đè <code>pred_*.json</code> hay <code>ref_*.json</code> bằng Notepad UTF-8 BOM; nếu lỡ lưu đè, kéo lại từ CVAT bằng <code>vf_cvat.py reference</code> hoặc tạo lại bằng <code>pp_prelabel.py</code>.</td></tr>
+        <tr><td>Docker báo <code>exit 137</code> (OOM) hoặc mất <code>d14_&lt;ID&gt;/</code></td><td>Tắt CVAT Docker (<code>docker compose stop</code>) khi chạy model nếu WSL2 RAM ≤ 4 GB; luôn mount <code>-v "${PWD}\work:/work" -w /work</code> và dùng <code>--host http://host.docker.internal:8080</code>.</td></tr>
+        <tr><td><code>vf_cvat.py reference</code> thiếu box vừa vẽ (kèm cảnh báo <code>Track</code>)</td><td>Trong popup Draw new cuboid của CVAT 3D đã bấm nhầm <b>Track</b>: xóa Track đó trên CVAT, vẽ lại bằng nút <b>Shape</b>, bấm <b>Save</b> rồi chạy lại <code>reference</code>.</td></tr>
+        <tr><td>Lỗi <code>404 organization does not exist</code> khi truyền <code>--org</code></td><td>CVAT Docker local không có organization tương ứng — bỏ hẳn cờ <code>--org</code> ở cả Bước 3 và Bước 5 (hoặc kiểm đúng slug khi chạy server lớp).</td></tr>
+        <tr><td><code>pp_sweep.py</code> báo <code>--grid ...: không có tham số này</code></td><td>Truyền tham số trong <code>--grid</code> bị thiếu dấu <code>=</code> — luôn viết đúng cú pháp <code>--grid score_thr=0.1,0.2,0.3,0.4,0.5</code> và nhớ giữ mốc <code>0.1</code>.</td></tr>
+        <tr><td>Thiếu <code>SEED</code> hoặc dài/rộng trên CVAT bị đảo</td><td>Truyền <code>--seed "&lt;SEED&gt;"</code> (hoặc <code>$env:D14_SEED="&lt;SEED&gt;"</code> / <code>export D14_SEED="&lt;SEED&gt;"</code>); nếu server CVAT khác đảo L/W, dùng <code>reference --scale-order wlh</code>.</td></tr>
+      </table>
+    </div>
+  </div>
+
+    <div class="foot">
+      Bám chuẩn <code>VinUni-AI20k/K5-L23-Day14-PointPillars-Prelabel</code> (commit <code>a5f6b9c</code> · <code>README.md</code>, <code>vf_pp/core.py</code>, <code>vf_cvat.py</code>). Mốc giờ là điểm tự kiểm tại lớp; bài nộp đóng gói theo <code>K5-DAY14-HoVaTen-MSSV/d14_&lt;ID&gt;/</code>.
+    </div>
+  </div>
+
+  <div class="toast" id="toast"><span id="toastMsg"></span><button type="button" id="toastX">OK</button></div>
+
+  <div class="lightbox" id="lightbox" onclick="if(event.target===this) closeLightbox()">
+    <button type="button" class="lb-btn lb-close" onclick="closeLightbox()" aria-label="Đóng">×</button>
+    <button type="button" class="lb-btn lb-prev" onclick="stepLightbox(-1)" aria-label="Ảnh trước">‹</button>
+    <img id="lbImg" src="" alt="">
+    <div class="lightbox-cap" id="lbCap"></div>
+    <div class="lightbox-idx" id="lbIdx"></div>
+    <button type="button" class="lb-btn lb-next" onclick="stepLightbox(1)" aria-label="Ảnh sau">›</button>
+  </div>
+
+  <script>
+    const TOTAL = 240;
+    const PHASES = [{"id": "cp0", "cp": "CP0", "pha": "Pha 0", "name": "Chuẩn bị máy & cài đặt", "start": 0, "dur": 0, "prepLabel": "~10 phút", "mode": "each", "color": "#5b6b82", "goals": ["Đã clone `K5-L23-Day14-PointPillars-Prelabel` và dựng xong `.venv` Python 3.9+ (hoặc Docker fallback)", "`setup_pp.py` tải xong `third_party/PointPillars` (commit `620e6b0`) và weights KITTI (~20 MB)", "`python pp_selftest.py --data \"<Data-VF>\"` in `[OK ]` ở mọi mục kèm `TẤT CẢ OK`"], "tasks": ["Clone repository gốc `K5-L23-Day14-PointPillars-Prelabel` và tạo `.venv` (PowerShell: `Set-ExecutionPolicy -Scope Process Bypass`, `$env:PYTHONUTF8 = \"1\"`)", "Cài `torch` bản CPU (`--index-url https://download.pytorch.org/whl/cpu`) rồi cài `pip install -r requirements.txt`", "Chạy `python setup_pp.py` (máy không có git dùng `--download-zip`)", "Chạy `python pp_selftest.py --data \"<Data-VF>\"` kiểm tra PyTorch ops (`voxelize`, `rotated IoU`) và chạy thử `s05f40`", "Đăng nhập thử CVAT 3D (`http://localhost:8080` hoặc server lớp); nếu dùng Docker fallback WSL2 RAM ≤ 4 GB nhớ tắt CVAT khi chạy model"], "cmds": [{"c": "python -m venv .venv\nSet-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass\n.\\.venv\\Scripts\\Activate.ps1\n$env:PYTHONUTF8 = \"1\"\npip install torch --index-url https://download.pytorch.org/whl/cpu\npip install -r requirements.txt", "m": "Windows PowerShell (macOS/Linux dùng source .venv/bin/activate)"}, {"c": "python setup_pp.py\npython pp_selftest.py --data \"<Data-VF>\"", "m": "Tải upstream + weights và tự kiểm (phải ra TẤT CẢ OK)"}], "outputs": ["`third_party/PointPillars/pretrained/epoch_160.pth`", "Đầu ra terminal `TẤT CẢ OK` trên dữ liệu `<Data-VF>`"], "understand": "Hai phép toán CUDA gốc (`voxelize`, `rotated NMS`) đã được thay bằng PyTorch thuần trong `vf_pp/upstream.py` để chạy CPU không cần biên dịch, còn mã upstream giữ nguyên không sửa.", "notes": ["PowerShell 5.1 không hỗ trợ `&&` hay `source` — luôn gõ từng dòng riêng.", "Nếu dùng Docker trên WSL2 ≤ 4 GB RAM, chạy `docker compose stop` để tắt CVAT trước lúc chạy model tránh OOM `exit 137`, và gắn `-v \"${PWD}\\work:/work\" -w /work`."], "rubric": "Điều kiện sẵn sàng trước giờ học: `pp_selftest.py --data \"<Data-VF>\"` đạt `TẤT CẢ OK`.", "subToc": []}, {"id": "cp1", "cp": "CP1", "pha": "Pha 1", "name": "6 frame giảng, hệ trục & chi phí", "start": 0, "dur": 40, "mode": "lec", "color": "#2563eb", "goals": ["Chạy xong `pp_prelabel.py` trên 6 frame buổi giảng (`demo/frames_lec.txt`) với cấu hình gốc và thử `--set score_thr=0.4 --set min_points=5`", "Mở xem `out/lec_png/*.jpg` (7 camera + BEV `50 m`), phân biệt được điểm mạnh và điểm sót (`Pedestrian`, `Cyclist`, `Truck`, `Bus`)", "Giải thích được phép đổi trục `VF ↔ KITTI`, `passes=4` và công thức `0.3·xóa + 1.0·thêm + 0.5·sửa`"], "tasks": ["Chạy `pp_prelabel.py` trên `demo/frames_lec.txt` xuất `out/lec.json` và ảnh `out/lec_png/*.jpg`", "Mở `out/lec_png/s05f40.jpg` cùng các frame còn lại để đối chiếu box trên 7 camera với bản đồ BEV bán kính `50 m`", "Chạy thử lần hai với `--set score_thr=0.4 --set min_points=5` và so sánh số box giảm đi trên từng lớp", "Đọc bảng 3 nhóm tham số trong `vf_pp/core.py:Config` (nhóm A đầu vào, nhóm B đầu ra model, nhóm C hậu xử lý VF)"], "cmds": [{"c": "python pp_prelabel.py --data \"<Data-VF>\" --frames demo/frames_lec.txt --out out/lec.json --plot out/lec_png", "m": "Chạy cấu hình gốc trên 6 frame buổi giảng"}, {"c": "python pp_prelabel.py --data \"<Data-VF>\" --frames demo/frames_lec.txt --set score_thr=0.4 --set min_points=5", "m": "Thử tăng ngưỡng tin cậy và số điểm tối thiểu trong box"}], "outputs": ["`out/lec.json` và 6 ảnh `out/lec_png/*.jpg`"], "understand": "Model KITTI chỉ nhìn `0–69.12 m` phía trước nên cần `passes=4` phủ vòng `50 m`. Hệ số phạt `1.0·thêm` nặng hơn gấp ba lần `0.3·xóa`, nên bỏ sót vật thật tốn công sửa hơn box thừa rất nhiều.", "notes": ["Đổi `voxel_size` khỏi `0.16` hoặc hạ `passes=1` sẽ làm kết quả tụt mạnh — đây là giới hạn hình học và lưới weights có chủ ý.", "Học viên không có nhãn GT ở buổi giảng; quan sát ảnh camera + BEV để chuẩn bị trực giác cho tập A."], "rubric": "Tiêu chí hiểu bài: giải thích được phép đổi trục `x_kitti = -y_vf, y_kitti = x_vf`, vai trò `passes=4` và ý nghĩa hàm `correction_cost` trong phạm vi `50 m`.", "subToc": [["deep-cp1-ban-chat-van-de-vi-sao-model-kitti-khong-dung-thang-duoc-tren-vf-lidar", "Bản chất vấn đề: vì sao model KITTI không dùng thẳng được trên VF LiDAR?"], ["deep-cp1-giai-nghia-vung-phu-4-luot-xoay-va-cong-thuc-chi-phi-sua", "Giải nghĩa vùng phủ 4 lượt xoay và công thức chi phí sửa"], ["deep-cp1-lua-chon-thiet-ke-ba-nhom-tham-so-cau-hinh-trong-vf-pp-core-py-config", "Lựa chọn thiết kế: ba nhóm tham số cấu hình trong vf_pp/core.py:Config"], ["deep-cp1-cac-buoc-thuc-hien-pha-1", "Các bước thực hiện Pha 1"], ["deep-cp1-checkpoint-pha-1-va-chuyen-sang-buoi-chieu", "Checkpoint Pha 1 và chuyển sang buổi chiều"]]}, {"id": "cp2", "cp": "CP2", "pha": "Pha 2", "name": "Tập A (Bước 1–5) & CVAT 3D", "start": 40, "dur": 60, "mode": "indep", "color": "#0f8a7e", "goals": ["Sinh `d14_<ID>/frames_A.txt` (3 frame) và `frames_B.txt` (12 frame) đúng `<ID>` và `<SEED>` công bố lúc vào lab", "Đẩy `pred_A.json` lên task `D14-<ID>-A`, sửa tay sạch 3 frame trên CVAT 3D (chỉ vẽ mới bằng **`Shape`**, KHÔNG **`Track`**)", "Kéo về `d14_<ID>/ref_A.json` khớp chính xác chỉ số `Items` trên CVAT và không có cảnh báo `Track`"], "tasks": ["Chạy `vf_cvat.py day14 --student \"<ID>\" --seed \"<SEED>\" --data \"<Data-VF>\"` (giữ nguyên số `0` đầu nếu có như `\"001\"`)", "Chạy `pp_prelabel.py` trên `frames_A.txt` để sinh `pred_A.json` và ảnh BEV `png_A/`", "Đẩy task `D14-<ID>-A` lên CVAT bằng `vf_cvat.py prelabel --task A` (bỏ `--org` nếu dùng CVAT local Docker)", "Mở CVAT 3D (~45′): chỉnh hộp lệch ở 3 khung `Top/Side/Front`, xóa hộp thừa (`Remove`/`Del`), thêm hộp sót bằng nút **`Shape`** (KHÔNG `Track`), bấm **Save**", "Chạy `vf_cvat.py reference --task A` kéo `d14_<ID>/ref_A.json` và đối chiếu số hộp từng frame khớp `Items` trên CVAT"], "cmds": [{"c": "python vf_cvat.py day14 --student \"<ID>\" --seed \"<SEED>\" --data \"<Data-VF>\"\npython pp_prelabel.py --data \"<Data-VF>\" --frames \"d14_<ID>/frames_A.txt\" --out \"d14_<ID>/pred_A.json\" --plot \"d14_<ID>/png_A\"", "m": "Bước 1–2: Sinh frame theo SEED và chạy pre-label Tập A"}, {"c": "python vf_cvat.py prelabel --student \"<ID>\" --task A --data \"<Data-VF>\" --boxes \"d14_<ID>/pred_A.json\" --host http://localhost:8080 --user \"<ten>\"", "m": "Bước 3: Đẩy lên CVAT (thêm --org <SLUG> nếu dùng server lớp có org)"}, {"c": "python vf_cvat.py reference --student \"<ID>\" --task A --host http://localhost:8080 --user \"<ten>\"\npython pp_prelabel.py --data \"<Data-VF>\" --frames \"d14_<ID>/frames_A.txt\" --gt \"d14_<ID>/ref_A.json\"", "m": "Bước 5: Kéo ref_A.json và đo chi phí gốc trên Tập A"}], "outputs": ["`d14_<ID>/frames_A.txt`, `frames_B.txt`, `pred_A.json`, `png_A/`", "Task CVAT `D14-<ID>-A` đã bấm Save và file `d14_<ID>/ref_A.json`"], "understand": "`vf_cvat.py reference` chỉ đọc cuboid dạng `Shape` và bỏ qua `Track` (có in cảnh báo `stderr`). Hãy bổ sung đầy đủ cả box bị sót thay vì chỉ xóa box thừa.", "notes": ["Tuyệt đối không mở lưu đè các file `.json` (`pred_A.json`, `ref_A.json`) bằng Windows Notepad có UTF-8 BOM.", "Nếu một server CVAT khác đảo chiều dài/rộng, chạy `reference` kèm `--scale-order wlh`."], "rubric": "Tiêu chí Tập A: đúng bộ frame theo `<ID>` + `<SEED>` (khớp `seed_tag=`), `ref_A.json` phản ánh đầy đủ sửa/xóa/thêm trên CVAT và khớp số `Items`.", "subToc": [["deep-cp2-ban-chat-van-de-tach-tap-tune-a-va-tap-nop-b-bang-ma-hoc-vien-seed", "Bản chất vấn đề: tách tập tune (A) và tập nộp (B) bằng mã học viên + SEED"], ["deep-cp2-giai-nghia-quy-tac-ma-hoc-vien-co-so-0-dau-bom-va-co-org", "Giải nghĩa quy tắc mã học viên có số 0 đầu, BOM và cờ --org"], ["deep-cp2-lua-chon-thiet-ke-chinh-sua-tren-pre-label-thay-vi-ve-lai-tu-dau-va-bay-shape-vs-track", "Lựa chọn thiết kế: chỉnh sửa trên pre-label thay vì vẽ lại từ đầu và bẫy Shape vs Track"], ["deep-cp2-cac-buoc-thuc-hien-buoc-1-5-tap-a", "Các bước thực hiện Bước 1–5 (Tập A)"], ["deep-cp2-checkpoint-pha-2-va-gio-nghi-giai-lao-1-40-1-50-10-phut", "Checkpoint Pha 2 và giờ nghỉ giải lao (1:40 → 1:50 · 10 phút)"]]}, {"id": "break", "cp": "☕", "pha": "Giờ nghỉ", "name": "Giải lao 10 phút", "start": 100, "dur": 10, "mode": "break", "color": "#9a948a", "goals": ["Đã bấm Save trên CVAT và kéo xong `d14_<ID>/ref_A.json` khớp số `Items` cho cả 3 frame tập A"], "tasks": ["Nghỉ mắt 10 phút rời màn hình", "Xem lại nhanh ảnh BEV `png_A/` để hình dung dự đoán Bước 5b trước khi mở Pha 3"], "cmds": [], "outputs": ["Sẵn sàng viết dự đoán Bước 5b và chạy lưới `pp_sweep.py`"], "understand": "Hãy nhớ viết xong 2 dòng dự đoán Bước 5b *trước* khi chạy `pp_sweep.py` để phép đối chiếu ở Bước 8 trung thực.", "notes": ["Nếu số hộp trong `ref_A.json` chưa khớp `Items` trên CVAT, kiểm tra lại nút Save và xem có box vẽ nhầm bằng `Track` không."], "rubric": "", "subToc": []}, {"id": "cp3", "cp": "CP3", "pha": "Pha 3", "name": "Bước 5b, Sweep & So sánh", "start": 110, "dur": 30, "mode": "indep", "color": "#d97706", "goals": ["Ghi xong **2 dòng dự đoán Bước 5b** vào báo cáo *trước* khi chạy `pp_sweep.py`", "Chạy `pp_sweep.py` (giữ mốc gốc `0.1` trong `--grid`) tạo `sweep.csv`, `best_config.json` và đọc kết quả **leave-one-out**", "Chạy `pp_compare.py` tạo ảnh BEV `52 m` (`compare/*.jpg`), đưa 1 ảnh vào báo cáo và kết luận trung thực 5b đúng hay sai"], "tasks": ["**Bước 5b:** Nhìn ảnh BEV tập A, ghi vào báo cáo 2 dòng: tham số nào nghĩ sẽ giảm công sửa nhiều nhất và vì sao (box thừa nhiều hay sót nhiều?)", "**Bước 6:** Chạy `pp_sweep.py` với `--grid score_thr=0.1,0.2,0.3,0.4,0.5 --grid min_points=0,5,10` (luôn có dấu `=` và giữ mốc `0.1`)", "Đọc Top 10 trong `sweep.csv` và kiểm **leave-one-out** xem cấu hình chọn có ổn định qua 3 frame hay overfit", "**Bước 8:** Chạy `pp_compare.py` xuất `d14_<ID>/compare/*.jpg`, mở ảnh BEV `52 m` (vòng đỏ `50 m`) đối chiếu `gốc` ↔ `của bạn` và viết nhận xét Bước 5b đúng/sai"], "cmds": [{"c": "python pp_sweep.py --data \"<Data-VF>\" --frames \"d14_<ID>/frames_A.txt\" --gt \"d14_<ID>/ref_A.json\" --grid score_thr=0.1,0.2,0.3,0.4,0.5 --grid min_points=0,5,10 --out \"d14_<ID>/sweep.csv\"", "m": "Bước 6: Quét 15 cấu hình trên Tập A (luôn có = và giữ 0.1)"}, {"c": "python pp_compare.py --data \"<Data-VF>\" --frames \"d14_<ID>/frames_A.txt\" --gt \"d14_<ID>/ref_A.json\" --tuned \"d14_<ID>/best_config.json\" --out \"d14_<ID>/compare\"", "m": "Bước 8: Sinh ảnh BEV trước/sau 52 m (vòng đỏ 50 m)"}], "outputs": ["`d14_<ID>/sweep.csv`, `d14_<ID>/best_config.json`, `d14_<ID>/compare/*.jpg`", "Mục Bước 5b + Bước 8 trong báo cáo (kèm 1 ảnh `compare/*.jpg`)"], "understand": "3 frame tập A là mẫu rất nhỏ. Nếu leave-one-out dao động mạnh hoặc % giảm ít (hoặc không giảm), nguyên nhân thường nằm ở giới hạn miền KITTI với vật bị sót chứ không phải lỗi script.", "notes": ["Luôn truyền `--grid key=vals` (thiếu `=` sẽ lỗi ngay).", "Bảng màu `compare`: xanh lá = đúng, vàng = cần sửa, đỏ = thừa (xóa), xanh dương = sót (thêm)."], "rubric": "Tiêu chí phân tích: có dự đoán 5b trước khi đo, có `sweep.csv` hợp lệ (giữ `0.1`), đọc `leave-one-out` và giải thích trung thực kết quả ở Bước 8.", "subToc": [["deep-cp3-ban-chat-van-de-ghi-du-doan-truoc-khi-do-va-rui-ro-overfit-tren-3-frame", "Bản chất vấn đề: ghi dự đoán trước khi đo và rủi ro overfit trên 3 frame"], ["deep-cp3-giai-nghia-co-che-cache-suy-luan-va-kiem-tra-cheo-leave-one-out", "Giải nghĩa cơ chế cache suy luận và kiểm tra chéo leave-one-out"], ["deep-cp3-lua-chon-thiet-ke-giu-moc-goc-0-1-trong-luoi-va-doc-anh-bev-52-m", "Lựa chọn thiết kế: giữ mốc gốc 0.1 trong lưới và đọc ảnh BEV 52 m"], ["deep-cp3-cac-buoc-thuc-hien-buoc-5b-6-va-8", "Các bước thực hiện Bước 5b, 6 và 8"], ["deep-cp3-checkpoint-pha-3-va-chuyen-sang-tap-b", "Checkpoint Pha 3 và chuyển sang Tập B"]]}, {"id": "cp4", "cp": "CP4", "pha": "Pha 4", "name": "Tập B (12 frame), Báo cáo & Nộp", "start": 140, "dur": 100, "mode": "indep", "color": "#15803d", "goals": ["Chạy `pp_prelabel.py` với `best_config.json` trên 12 frame `frames_B.txt` tạo `pred_B.json` và đẩy task `D14-<ID>-B` lên CVAT", "Kiểm sửa bằng tay toàn bộ **12 frame** trên `D14-<ID>-B` bằng **`Shape`** (KHÔNG nộp thẳng box model), bấm Save và kéo về `d14_<ID>/ref_B.json`", "Hoàn tất báo cáo trung thực và nén `K5-DAY14-HoVaTen-MSSV/d14_<ID>/` (giữ số `0` đầu) nộp qua LMS"], "tasks": ["Chạy `pp_prelabel.py` với `--frames d14_<ID>/frames_B.txt --config d14_<ID>/best_config.json --out d14_<ID>/pred_B.json`", "Đẩy task `D14-<ID>-B` lên CVAT bằng `vf_cvat.py prelabel --task B` và kiểm trang Tasks hiển thị đủ A & B", "Sửa tay toàn bộ 12 frame trong `D14-<ID>-B` trên CVAT 3D (chỉ dùng **`Shape`**, kiểm `Pedestrian`/`Cyclist`/`Truck`/`Bus`), bấm **Save**", "Chạy `vf_cvat.py reference --task B` xuất `d14_<ID>/ref_B.json` (khớp số `Items`, 0 cảnh báo `Track`)", "Hoàn thiện báo cáo trong `d14_<ID>/` (5b, leave-one-out, ảnh Bước 8, không phóng đại % giảm hay quy đổi ra giờ công thật)", "Đặt `d14_<ID>/` vào trong `K5-DAY14-HoVaTen-MSSV/` (giữ số `0` đầu như `d14_001/`), nén `.zip` và nộp lên LMS"], "cmds": [{"c": "python pp_prelabel.py --data \"<Data-VF>\" --frames \"d14_<ID>/frames_B.txt\" --config \"d14_<ID>/best_config.json\" --out \"d14_<ID>/pred_B.json\"\npython vf_cvat.py prelabel --student \"<ID>\" --task B --data \"<Data-VF>\" --boxes \"d14_<ID>/pred_B.json\" --host http://localhost:8080 --user \"<ten>\"", "m": "Bước 7a–7b: Sinh pred_B.json bằng cấu hình đã tune và đẩy lên CVAT"}, {"c": "python vf_cvat.py reference --student \"<ID>\" --task B --host http://localhost:8080 --user \"<ten>\"", "m": "Bước 7c: Xuất nhãn 12 frame Tập B đã kiểm sửa thành d14_<ID>/ref_B.json"}], "outputs": ["`d14_<ID>/pred_B.json` và **`d14_<ID>/ref_B.json`** (12 frame đã người kiểm)", "Báo cáo đặt trong `d14_<ID>/`", "Gói nén `K5-DAY14-HoVaTen-MSSV.zip` chứa `K5-DAY14-HoVaTen-MSSV/d14_<ID>/` nộp LMS"], "understand": "Tập B là bài kiểm tra độc lập 12 frame; pre-label chỉ hỗ trợ giảm công chứ không thay người gán. Với CVAT Docker local, không có `ref_B.json` thì giảng viên không chấm được Tập B.", "notes": ["`d14_*/` nằm trong `.gitignore` — không push `d14_<ID>/`, `<SEED>` hay mật khẩu CVAT lên GitHub.", "Kiểm tra đủ 10 đầu mục trong `d14_<ID>/`: `frames_A.txt`, `frames_B.txt`, `pred_A.json`, `pred_B.json`, `ref_A.json`, `ref_B.json`, `sweep.csv`, `best_config.json`, `compare/`, và file báo cáo."], "rubric": "Tiêu chí Tập B & báo cáo: đủ 12 frame có `seed_tag=` khớp `<SEED>`, `ref_B.json` đã được người kiểm sửa sạch sẽ, báo cáo trung thực giới hạn KITTI và không phóng đại % giảm.", "subToc": [["deep-cp4-ban-chat-van-de-kiem-chung-tren-12-frame-doc-lap-va-trach-nhiem-trung-thuc-voi-du-lieu", "Bản chất vấn đề: kiểm chứng trên 12 frame độc lập và trách nhiệm trung thực với dữ liệu"], ["deep-cp4-giai-nghia-quy-trinh-xuat-ref-b-json-tren-cvat-local-va-cau-truc-goi-nop", "Giải nghĩa quy trình xuất ref_B.json trên CVAT local và cấu trúc gói nộp"], ["deep-cp4-cac-buoc-thuc-hien-buoc-7-va-dong-goi-nop-bai", "Các bước thực hiện Bước 7 và đóng gói nộp bài"], ["deep-cp4-checkpoint-ban-giao-cuoi-bai-lab", "Checkpoint bàn giao cuối bài Lab"]]}];
+    const MODES = {
+      each: { t: "👤 Cá nhân (chuẩn bị)", c: "" },
+      lec: { t: "🎓 Buổi giảng + tự chạy", c: "setup" },
+      indep: { t: "🔒 Cá nhân theo ID + SEED", c: "indep" },
+      break: { t: "☕ Nghỉ", c: "" }
+    };
+
+    const $ = s => document.querySelector(s);
+    const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    function mdInline(s) {
+      return esc(s)
+        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (m, a, u) => `<a href="${u}" target="_blank" rel="noopener">${a}</a>`)
+        .replace(/`([^`]+)`/g, (m, a) => `<code>${a}</code>`)
+        .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+        .replace(/\*([^*]+)\*/g, "<em>$1</em>");
+    }
+    const pad = n => String(n).padStart(2, "0");
+    function fmtHMS(ms) { const neg = ms < 0; ms = Math.abs(ms); const t = Math.floor(ms / 1000); const h = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60), s = t % 60; return (neg ? "+" : "") + h + ":" + pad(m) + ":" + pad(s); }
+    function fmtMS(ms) { const neg = ms < 0; ms = Math.abs(ms); const t = Math.ceil(ms / 1000 - (neg ? 1 : 0)); const m = Math.floor(t / 60), s = t % 60; return (neg ? "+" : "") + pad(m) + ":" + pad(s); }
+    const fmtMin = m => Math.floor(m / 60) + ":" + pad(m % 60);
+    const clock = d => pad(d.getHours()) + ":" + pad(d.getMinutes());
+
+    const KEY = "day14-lab-a5f6b9c-v1";
+    let S = { acc: 0, since: null, sound: true, follow: true, sel: 1, viewAll: false, theme: "light", checks: {} };
+    try { const raw = localStorage.getItem(KEY); if (raw) S = Object.assign(S, JSON.parse(raw)); } catch (e) { }
+    function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { } }
+    const running = () => S.since !== null;
+    const elapsedMs = () => Math.max(0, S.acc + (running() ? Date.now() - S.since : 0));
+    function phaseIdx(min) {
+      for (let i = 0; i < PHASES.length; i++) {
+        if (PHASES[i].dur > 0 && min < PHASES[i].start + PHASES[i].dur) return i;
+      }
+      return PHASES.length - 1;
+    }
+
+    let lastIdx = phaseIdx(elapsedMs() / 60000);
+    const warned = {}; let endAlerted = elapsedMs() >= TOTAL * 60000;
+    PHASES.forEach((p, i) => { if (p.dur > 0) { const left = (p.start + p.dur) * 60000 - elapsedMs(); if (left <= 5 * 60000) warned[i] = true; } });
+
+    /* ---------- theme ---------- */
+    function applyTheme() {
+      document.documentElement.setAttribute("data-theme", S.theme === "dark" ? "dark" : "light");
+      const bt = $("#bTheme");
+      if (bt) bt.textContent = S.theme === "dark" ? "☀️ Sáng" : "🌙 Tối";
+    }
+    $("#bTheme").onclick = () => { S.theme = S.theme === "dark" ? "light" : "dark"; save(); applyTheme(); };
+
+    /* ---------- audio & toast ---------- */
+    let AC = null;
+    function ensureAudio() { try { if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === "suspended") AC.resume(); } catch (e) { } }
+    function beep(pattern) {
+      if (!S.sound || !AC) return;
+      let t = AC.currentTime;
+      pattern.forEach(([f, d]) => {
+        const o = AC.createOscillator(), g = AC.createGain();
+        o.type = "sine"; o.frequency.value = f; o.connect(g); g.connect(AC.destination);
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.35, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + d / 1000);
+        o.start(t); o.stop(t + d / 1000 + 0.02); t += d / 1000 + 0.08;
+      });
+    }
+    let toastT = null;
+    function toast(msg, kind = "", ms = 9000) {
+      const el = $("#toast"); $("#toastMsg").innerHTML = msg; el.className = "toast show " + kind;
+      clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove("show"), ms);
+    }
+    $("#toastX").onclick = () => $("#toast").classList.remove("show");
+
+    /* ---------- copy & code-tabs & lightbox ---------- */
+    function copyRawText(txt, btn) {
+      const done = () => { const orig = btn.textContent; btn.textContent = "✓ Đã copy"; setTimeout(() => btn.textContent = orig, 1400); };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(txt).then(done).catch(() => fallbackCopy(txt, done));
+      } else { fallbackCopy(txt, done); }
+    }
+    function fallbackCopy(txt, cb) {
+      const ta = document.createElement("textarea"); ta.value = txt; ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); cb(); } finally { ta.remove(); }
+    }
+    function copyPre(btn) {
+      const pre = btn.closest(".cmd").querySelector("pre");
+      const clone = pre.cloneNode(true);
+      clone.querySelectorAll(".cm").forEach(n => n.remove());
+      copyRawText(clone.innerText.trim(), btn);
+    }
+    function switchTab(btn, idx) {
+      const wrap = btn.closest(".code-tabs");
+      wrap.querySelectorAll(".tab-btn").forEach((b, i) => b.classList.toggle("active", i === idx));
+      wrap.querySelectorAll(".tab-panel").forEach((p, i) => p.classList.toggle("active", i === idx));
+    }
+
+    let lbFigures = []; let lbIndex = 0;
+    function openLightbox(img) {
+      lbFigures = Array.from(document.querySelectorAll("#panelHost .lab-figure img"));
+      lbIndex = Math.max(0, lbFigures.indexOf(img));
+      showLightbox();
+    }
+    function showLightbox() {
+      const img = lbFigures[lbIndex]; if (!img) return;
+      $("#lbImg").src = img.src; $("#lbImg").alt = img.alt;
+      const cap = img.closest("figure").querySelector("figcaption");
+      $("#lbCap").textContent = cap ? cap.textContent : img.alt;
+      $("#lbIdx").textContent = `Ảnh ${lbIndex + 1} / ${lbFigures.length}`;
+      $("#lightbox").classList.add("open");
+    }
+    function closeLightbox() { $("#lightbox").classList.remove("open"); }
+    function stepLightbox(d) { lbIndex = (lbIndex + d + lbFigures.length) % lbFigures.length; showLightbox(); }
+
+    /* ---------- timeline & stepper ---------- */
+    function buildTimeline() {
+      const tr = $("#track"), tk = $("#ticks");
+      PHASES.forEach((p, i) => {
+        if (p.dur <= 0) return;
+        const d = document.createElement("div"); d.className = "seg"; d.dataset.i = i;
+        d.style.width = (p.dur / TOTAL * 100) + "%"; d.style.background = p.color;
+        d.innerHTML = `${p.cp}<small>${esc(p.name)}</small>`; d.title = `${p.pha} · ${p.name} (${p.dur}′)`;
+        d.onclick = () => select(i, true); tr.insertBefore(d, $("#needle"));
+        const t = document.createElement("div"); t.className = "tick"; t.style.left = ((p.start + p.dur) / TOTAL * 100) + "%";
+        if (p.id === "break") t.classList.add("tick-stagger", "tick-break-print");
+        if (i === PHASES.length - 1) t.classList.add("tick-end");
+        t.innerHTML = p.id === "break" ? `${fmtMin(p.start + p.dur)}` : `<b>${p.cp}</b>${fmtMin(p.start + p.dur)}`;
+        if (i === PHASES.length - 1) t.style.transform = "translateX(-100%)";
+        tk.appendChild(t);
+      });
+    }
+    function buildStepper() {
+      const st = $("#stepper"); st.innerHTML = "";
+      PHASES.forEach((p, i) => {
+        const d = document.createElement("div"); d.className = "step"; d.dataset.i = i;
+        const tmStr = p.dur > 0 ? `${p.pha} · ${fmtMin(p.start)} → ${fmtMin(p.start + p.dur)} · ${p.dur}′` : `${p.pha} · ${p.prepLabel}`;
+        d.innerHTML = `<div class="dot" style="background:${p.color}">${p.cp}</div>
+      <div><div class="nm">${esc(p.name)}</div><div class="tm">${tmStr}</div></div>
+      <div class="cnt" id="cnt${i}"></div>`;
+        d.onclick = () => {
+          if (S.viewAll) {
+            const target = document.getElementById("panel-" + p.id);
+            if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+            S.sel = i; paintSel();
+          } else { select(i, true); }
+        };
+        st.appendChild(d);
+      });
+      const b = document.createElement("button"); b.className = "btn follow"; b.id = "bFollow";
+      b.onclick = () => { S.follow = true; if (S.viewAll) { S.viewAll = false; refreshViewBtn(); } select(lastIdx, false); save(); refreshFollow(); };
+      st.appendChild(b);
+
+      const toc = document.createElement("div"); toc.className = "toc-box"; toc.id = "sidebarToc";
+      st.appendChild(toc);
+      refreshFollow(); refreshCounts(); renderSidebarToc();
+    }
+    function renderSidebarToc() {
+      const toc = $("#sidebarToc"); if (!toc) return;
+      if (S.viewAll) {
+        toc.innerHTML = `<div class="toc-title">Mục lục toàn bài</div>` +
+          PHASES.map(p => `<a class="toc-link" href="#panel-${p.id}">${p.cp} · ${esc(p.name)}</a>`).join("") +
+          `<a class="toc-link" href="#refSection">📏 Ngưỡng &amp; Quy tắc vàng</a>`;
+      } else {
+        const p = PHASES[S.sel];
+        const sub = (p.subToc || []).map(x => `<a class="toc-link sub" href="#${x[0]}">${esc(x[1])}</a>`).join("");
+        toc.innerHTML = `<div class="toc-title">Mục lục ${p.cp}</div>
+      <a class="toc-link" href="#${p.id}-goals">🎯 Mục tiêu cần đạt</a>
+      <a class="toc-link" href="#${p.id}-tasks">✅ Việc cần làm</a>
+      ${p.cmds.length ? `<a class="toc-link" href="#${p.id}-cmds">⌨️ Lệnh chạy nhanh</a>` : ""}
+      <a class="toc-link" href="#${p.id}-deep">🖼️ Chi tiết &amp; Ảnh mẫu</a>
+      ${sub}
+      <a class="toc-link" href="#refSection">📏 Ngưỡng &amp; Quy tắc</a>`;
+      }
+    }
+    function refreshFollow() { const b = $("#bFollow"); if (!b) return; b.textContent = S.follow ? "✓ Đang tự theo pha hiện tại" : "↻ Theo pha hiện tại"; b.classList.toggle("on", S.follow); }
+    function refreshCounts() {
+      PHASES.forEach((p, i) => {
+        const c = S.checks[p.id] || {}; const n = p.tasks.filter((_, k) => c["t" + k]).length; const g = p.goals.filter((_, k) => c["g" + k]).length;
+        const el = $("#cnt"+i); if (el) el.textContent = `${n + g}/${p.tasks.length + p.goals.length}`;
+      });
+    }
+    function refreshViewBtn() {
+      const b = $("#bViewAll");
+      if (b) { b.textContent = S.viewAll ? "⏱ Xem theo pha" : "📖 Xem tất cả"; b.classList.toggle("on", S.viewAll); }
+    }
+
+    /* ---------- panels ---------- */
+    function stashAllDeepBlocks() {
+      const arch = $("#deepArchive");
+      document.querySelectorAll(".deep-panel").forEach(el => arch.appendChild(el));
+    }
+    function chkListHtml(p, arr, prefix, numbered) {
+      const c = S.checks[p.id] || {};
+      return `<ul class="chk">${arr.map((t, k) => {
+        const on = !!c[prefix + k];
+        return `<li class="${on ? "checked" : ""}"><input type="checkbox" data-p="${p.id}" data-k="${prefix + k}" ${on ? "checked" : ""}><span>${numbered ? `<span class="num">${k + 1}.</span>` : ""}${mdInline(t)}</span></li>`;
+      }).join("")}</ul>`;
+    }
+    function buildPhaseCard(p, startWall) {
+      const m = MODES[p.mode];
+      const at = min => clock(new Date(startWall.getTime() + min * 60000));
+      const card = document.createElement("section");
+      card.className = "panel"; card.id = "panel-" + p.id; card.style.setProperty("--pc", p.color);
+      const metaTime = p.dur > 0
+        ? `<span>⏱ <b>${fmtMin(p.start)} → ${fmtMin(p.start + p.dur)}</b> · ${p.dur} phút</span><span class="wall-clock-wrap">🕘 Giờ dự kiến: <b class="wall-clock" data-s="${p.start}" data-e="${p.start + p.dur}">${at(p.start)} → ${at(p.start + p.dur)}</b></span>`
+        : `<span>⏱ <b>${esc(p.prepLabel)}</b> (làm trước buổi giảng)</span>`;
+      card.innerHTML = `
+    <div class="p-head">
+      <span class="cpb" style="background:${p.color};font-size:14px;padding:4px 12px">${p.cp}</span>
+      <h2>${p.pha} · ${esc(p.name)}</h2>
+      <div class="p-actions hide-present">
+        ${p.dur > 0 ? `<button type="button" class="btn" data-jump="${p.start}" data-pname="${esc(p.pha + ' · ' + p.name)}" title="Đặt đồng hồ về đầu pha này">⤒ Nhảy tới đầu pha</button>` : ""}
+      </div>
+    </div>
+    <div class="p-meta">
+      <span class="mode ${m.c}">${m.t}</span>
+      ${metaTime}
+    </div>
+    <div class="goalbox" id="${p.id}-goals">
+      <h3>🎯 Mục tiêu cần đạt ${p.id === "break" ? "trước Pha 3" : "tại " + p.cp + " (tự kiểm tra)"}</h3>
+      ${chkListHtml(p, p.goals, "g", false)}
+    </div>
+    <div class="cols">
+      <div>
+        <div class="sec" id="${p.id}-tasks"><h3>✅ Việc cần làm</h3>${chkListHtml(p, p.tasks, "t", true)}</div>
+      </div>
+      <div>
+        ${p.outputs.length ? `<div class="sec"><h3>📦 Sản phẩm cần có</h3><ul class="plain">${p.outputs.map(o => `<li>${mdInline(o)}</li>`).join("")}</ul></div>` : ""}
+        <div class="sec"><div class="q"><b class="qtitle">💡 Cần hiểu ở mốc này</b>${mdInline(p.understand)}</div></div>
+        ${p.notes.length ? `<div class="sec">${p.notes.map(n => `<div class="note">${mdInline(n)}</div>`).join("")}</div>` : ""}
+        ${p.cmds.length ? `<div class="sec hide-present" id="${p.id}-cmds"><h3>⌨️ Lệnh chính (từ thư mục gốc repo)</h3>${p.cmds.map(c => `<div class="cmd"><pre>${c.m ? `<span class="cm"># ${esc(c.m)}\n</span>` : ""}${esc(c.c)}</pre><button type="button" onclick="copyPre(this)">Copy</button></div>`).join("")}</div>` : ""}
+        ${p.rubric ? `<div class="sec hide-present"><h3>🏁 Rubric liên quan</h3><div class="rub">${mdInline(p.rubric)}</div></div>` : ""}
+      </div>
+    </div>
+    <div class="deep-wrap" id="${p.id}-deep">
+      <div class="deep-banner">
+        <h3>${p.id === "break" ? "☕ Ghi chú giờ nghỉ" : "🖼️ Hướng dẫn chi tiết, sơ đồ hệ trục &amp; ảnh thao tác CVAT thực tế"}</h3>
+        <button type="button" class="btn hide-present" onclick="toggleDeep(this)">Thu gọn / Mở chi tiết</button>
+      </div>
+      <div class="deep-slot"></div>
+    </div>`;
+      const deepEl = $(`.deep-panel[data-deep-id="${p.id}"]`);
+      if (deepEl) card.querySelector(".deep-slot").appendChild(deepEl);
+      return card;
+    }
+    function toggleDeep(btn) {
+      const slot = btn.closest(".deep-wrap").querySelector(".deep-slot");
+      slot.hidden = !slot.hidden;
+    }
+    function wrapNoSplit(root) {
+      if (!root) return;
+      const tokRe = /(?:"<[^"\n]{1,20}>"|--[A-Za-z0-9][A-Za-z0-9_-]*|[A-Za-z0-9_]+(?:-[A-Za-z0-9_]+)+\.[A-Za-z0-9]{1,8}|best_config\.json|frames_(?:A|B|lec)\.txt|ref_[AB]\.json|pred_[AB]\.json|sweep\.csv|epoch_160\.pth)/g;
+      root.querySelectorAll("code, .cmd pre").forEach(el => {
+        if (el.dataset.nwDone) return;
+        el.dataset.nwDone = "1";
+        const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
+        const nodes = [];
+        let n;
+        while ((n = w.nextNode())) {
+          if (n.parentElement && n.parentElement.closest(".cm,.nw")) continue;
+          if (tokRe.test(n.nodeValue)) nodes.push(n);
+          tokRe.lastIndex = 0;
+        }
+        nodes.forEach(tn => {
+          const txt = tn.nodeValue;
+          tokRe.lastIndex = 0;
+          const frag = document.createDocumentFragment();
+          let last = 0, m;
+          while ((m = tokRe.exec(txt)) !== null) {
+            if (m.index > last) frag.appendChild(document.createTextNode(txt.slice(last, m.index)));
+            if (m[0].length <= 26) {
+              const sp = document.createElement("span");
+              sp.className = "nw";
+              sp.textContent = m[0];
+              frag.appendChild(sp);
+            } else {
+              frag.appendChild(document.createTextNode(m[0]));
+            }
+            last = m.index + m[0].length;
+          }
+          if (last < txt.length) frag.appendChild(document.createTextNode(txt.slice(last)));
+          tn.parentNode.replaceChild(frag, tn);
+        });
+      });
+    }
+    function renderPanels() {
+      stashAllDeepBlocks();
+      const host = $("#panelHost"); host.innerHTML = "";
+      const startWall = new Date(Date.now() - elapsedMs());
+      const list = S.viewAll ? PHASES : [PHASES[S.sel]];
+      list.forEach(p => host.appendChild(buildPhaseCard(p, startWall)));
+
+      host.querySelectorAll("input[type=checkbox][data-p]").forEach(cb => cb.onchange = () => {
+        const id = cb.dataset.p; S.checks[id] = S.checks[id] || {}; S.checks[id][cb.dataset.k] = cb.checked;
+        cb.closest("li").classList.toggle("checked", cb.checked); save(); refreshCounts();
+      });
+      host.querySelectorAll("[data-jump]").forEach(b => b.onclick = () => {
+        setElapsed((+b.dataset.jump) * 60000); S.follow = true; save(); refreshFollow();
+        toast(`Đồng hồ đặt về đầu <b>${esc(b.dataset.pname)}</b>`, "", 3500);
+      });
+      wrapNoSplit(host);
+      renderSidebarToc();
+    }
+
+    function select(i, manual) {
+      S.sel = i;
+      if (manual && i !== lastIdx) S.follow = false;
+      if (manual && i === lastIdx) S.follow = true;
+      save(); renderPanels(); refreshFollow(); paintSel();
+    }
+    function paintSel() {
+      document.querySelectorAll(".step").forEach(el => el.classList.toggle("sel", +el.dataset.i === S.sel));
+      document.querySelectorAll(".seg").forEach(el => el.classList.toggle("sel", +el.dataset.i === S.sel));
+    }
+
+    /* ---------- timer & controls ---------- */
+    function setElapsed(ms) {
+      ms = Math.max(0, ms); S.acc = ms; if (running()) S.since = Date.now();
+      lastIdx = phaseIdx(ms / 60000);
+      PHASES.forEach((p, i) => { if (p.dur > 0) warned[i] = (p.start + p.dur) * 60000 - ms <= 5 * 60000; });
+      endAlerted = ms >= TOTAL * 60000;
+      if (S.follow) { S.sel = lastIdx; renderPanels(); paintSel(); }
+      refreshWallClocks();
+      save(); tick();
+    }
+    function toggle() {
+      ensureAudio();
+      if (running()) { S.acc = elapsedMs(); S.since = null; }
+      else {
+        S.since = Date.now();
+        if (elapsedMs() === 0) toast(`▶ Bắt đầu! <b>${PHASES[lastIdx].pha} · ${esc(PHASES[lastIdx].name)}</b>: ${PHASES[lastIdx].dur} phút`, "go", 4500);
+        beep([[660, 120]]);
+      }
+      save(); tick();
+    }
+    $("#bStart").onclick = toggle;
+    document.querySelectorAll("[data-adj]").forEach(b => b.onclick = () => setElapsed(elapsedMs() + (+b.dataset.adj) * 60000));
+    $("#bViewAll").onclick = () => { S.viewAll = !S.viewAll; save(); refreshViewBtn(); renderPanels(); };
+    let resetArm = null;
+    $("#bReset").onclick = () => {
+      const b = $("#bReset");
+      if (!resetArm) { b.textContent = "Bấm lần nữa để đặt lại"; resetArm = setTimeout(() => { b.textContent = "↺ Đặt lại"; resetArm = null; }, 3000); return; }
+      clearTimeout(resetArm); resetArm = null; b.textContent = "↺ Đặt lại";
+      S.since = null; S.checks = {}; S.follow = true; setElapsed(0); renderPanels(); refreshCounts(); refreshFollow();
+    };
+    $("#bSync").onclick = () => {
+      const v = $("#syncTime").value; if (!v) { toast("Chọn giờ lớp bắt đầu trước (ví dụ 08:00).", "warn", 4000); return; }
+      ensureAudio();
+      const [h, m] = v.split(":").map(Number); const d = new Date(); d.setHours(h, m, 0, 0);
+      const diff = Date.now() - d.getTime();
+      if (diff < 0) { toast("Giờ bắt đầu nằm ở tương lai. Kiểm tra lại giờ đã nhập.", "warn", 4500); return; }
+      S.since = Date.now(); S.follow = true; setElapsed(diff);
+      toast(`Đã đồng bộ: lớp bắt đầu lúc <b>${esc(v)}</b>, đã trôi ${fmtHMS(diff)}`, "go", 4500);
+    };
+    function refreshSound() { const b = $("#bSound"); b.textContent = S.sound ? "🔔 Âm báo" : "🔕 Tắt âm"; b.classList.toggle("on", !S.sound); }
+    $("#bSound").onclick = () => { S.sound = !S.sound; ensureAudio(); save(); refreshSound(); if (S.sound) beep([[880, 100]]); };
+    $("#bPresent").onclick = () => { document.body.classList.toggle("present"); $("#bPresent").classList.toggle("on"); };
+    $("#bFull").onclick = () => { try { if (!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen(); } catch (e) { } };
+
+    document.addEventListener("keydown", e => {
+      if ($("#lightbox").classList.contains("open")) {
+        if (e.key === "Escape") closeLightbox();
+        if (e.key === "ArrowLeft") stepLightbox(-1);
+        if (e.key === "ArrowRight") stepLightbox(1);
+        return;
+      }
+      if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+      if (e.code === "Space") { e.preventDefault(); toggle(); }
+      else if (e.key === "ArrowRight") select(Math.min(PHASES.length - 1, S.sel + 1), true);
+      else if (e.key === "ArrowLeft") select(Math.max(0, S.sel - 1), true);
+      else if (e.key === "p" || e.key === "P") $("#bPresent").click();
+      else if (e.key === "f" || e.key === "F") $("#bFull").click();
+      else if (e.key === "t" || e.key === "T") $("#bTheme").click();
+    });
+
+    function tick() {
+      const ms = elapsedMs(), min = ms / 60000, i = phaseIdx(min), p = PHASES[i];
+      const endMs = (p.start + p.dur) * 60000, left = endMs - ms, over = ms >= TOTAL * 60000;
+
+      if (i !== lastIdx) {
+        if (running() && i > lastIdx) {
+          const prev = PHASES[lastIdx];
+          const chk = prev.id === "break" ? "" : ` Tự kiểm tra <b>${prev.cp}</b>.`;
+          toast(`⏰ Hết giờ <b>${prev.pha} · ${esc(prev.name)}</b>.${chk} Bắt đầu <b>${p.pha} · ${esc(p.name)}</b> (${p.dur}′)`, "go", 15000);
+          beep([[784, 180], [988, 180], [1175, 320]]);
+        }
+        lastIdx = i; if (S.follow) { S.sel = i; renderPanels(); paintSel(); } refreshFollow();
+      }
+      if (running() && !warned[i] && left <= 5 * 60000 && left > 0 && p.dur > 5) {
+        warned[i] = true; toast(`⚠️ Còn 5 phút cho <b>${p.pha} · ${esc(p.name)}</b>. Chuẩn bị chốt ${p.id === "break" ? "và quay lại lớp" : "bằng chứng cho " + p.cp}.`, "warn", 10000); beep([[660, 200], [660, 200]]);
+      }
+      if (running() && over && !endAlerted) {
+        endAlerted = true; toast("🏁 Hết 4 giờ! Kiểm tra <code>ref_B.json</code>, báo cáo và nén <code>K5-DAY14-HoVaTen-MSSV/d14_&lt;ID&gt;/</code> nộp lên LMS.", "warn", 20000);
+        beep([[523, 250], [659, 250], [784, 250], [1047, 500]]);
+      }
+
+      const now = $("#now"); now.style.setProperty("--pc", p.color);
+      now.classList.toggle("warn", !over && left <= 5 * 60000); now.classList.toggle("over", over);
+      $("#nowCp").textContent = p.cp; $("#nowCp").style.background = p.color;
+      $("#nowName").textContent = `${p.pha} · ${p.name}`;
+      const m = MODES[p.mode]; const nm = $("#nowMode"); nm.textContent = m.t; nm.className = "mode " + m.c;
+      $("#nowLeft").textContent = fmtMS(left);
+      $("#nowSub").innerHTML = over ? `<b>Quá giờ</b> so với kế hoạch 240 phút` :
+        (p.id === "break" ? `Còn lại của giờ nghỉ · Pha 3 bắt đầu lúc <b>${fmtMin(p.start + p.dur)}</b>` : `Còn lại tới mốc <b>${p.cp}</b> (phút ${fmtMin(p.start + p.dur)})`);
+      $("#nowBar").style.width = Math.min(100, (ms - p.start * 60000) / (p.dur * 60000) * 100) + "%";
+      const pill = $("#statePill"); pill.textContent = running() ? "● Đang chạy" : (ms > 0 ? "❚❚ Tạm dừng" : "Chưa bắt đầu"); pill.classList.toggle("run", running());
+      $("#bStart").textContent = running() ? "❚❚ Tạm dừng" : (ms > 0 ? "▶ Tiếp tục" : "▶ Bắt đầu");
+
+      $("#tElapsed").textContent = fmtHMS(ms);
+      $("#tLeft").textContent = fmtHMS(TOTAL * 60000 - ms);
+      const nowD = new Date(); $("#tClock").textContent = clock(nowD);
+      $("#tEnd").textContent = clock(new Date(nowD.getTime() + TOTAL * 60000 - ms));
+      const nxt = PHASES.slice(i).find(q => q.dur > 0 && q.id !== "break" && (q.start + q.dur) * 60000 > ms);
+      $("#tNext").innerHTML = over ? "🏁 Đã hết thời gian dự kiến. Kiểm tra <code>ref_B.json</code>, báo cáo và nộp gói <code>K5-DAY14-HoVaTen-MSSV</code>." :
+        (nxt ? `Mốc tiếp theo: <b>${nxt.cp} · ${esc(nxt.name)}</b> lúc phút ${fmtMin(nxt.start + nxt.dur)} (khoảng <b>${clock(new Date(nowD.getTime() + (nxt.start + nxt.dur) * 60000 - ms))}</b>), còn ${fmtHMS((nxt.start + nxt.dur) * 60000 - ms).replace(/^0:/, "")}` : "");
+
+      $("#needle").style.left = Math.min(100, ms / (TOTAL * 60000) * 100) + "%";
+      $("#tlPct").textContent = Math.min(100, Math.round(ms / (TOTAL * 60000) * 100)) + "%";
+      document.querySelectorAll(".seg").forEach(el => {
+        const k = +el.dataset.i;
+        el.classList.toggle("cur", k === i && !over);
+        el.classList.toggle("done", k < i || over);
+      });
+      document.querySelectorAll(".step").forEach(el => {
+        const k = +el.dataset.i;
+        if (PHASES[k].dur > 0) {
+          el.classList.toggle("cur", k === i && !over);
+          el.classList.toggle("done", k < i || over);
+        }
+      });
+    }
+
+    const IS_PRINT = new URLSearchParams(location.search).get("print") === "1";
+    if (IS_PRINT) {
+      S.theme = "light"; S.viewAll = true;
+      document.body.classList.add("print-mode");
+    }
+    applyTheme(); buildTimeline(); buildStepper(); refreshSound(); refreshViewBtn();
+    if (S.follow && !S.viewAll && !IS_PRINT) S.sel = lastIdx;
+    renderPanels(); wrapNoSplit(document.getElementById("refSection")); paintSel(); tick();
+
+    let _prePrintState = null;
+    window.addEventListener("beforeprint", () => {
+      _prePrintState = { viewAll: S.viewAll, theme: S.theme };
+      S.viewAll = true; S.theme = "light"; applyTheme(); renderPanels();
+    });
+    window.addEventListener("afterprint", () => {
+      if (_prePrintState && !IS_PRINT) {
+        S.viewAll = _prePrintState.viewAll; S.theme = _prePrintState.theme;
+        applyTheme(); refreshViewBtn(); renderPanels(); paintSel();
+      }
+      _prePrintState = null;
+    });
+
+    function refreshWallClocks() {
+      const startWall = new Date(Date.now() - elapsedMs());
+      const at = min => clock(new Date(startWall.getTime() + min * 60000));
+      document.querySelectorAll(".wall-clock").forEach(el => {
+        el.textContent = `${at(+el.dataset.s)} → ${at(+el.dataset.e)}`;
+      });
+    }
+    setInterval(tick, 250);
+    setInterval(refreshWallClocks, 15000);
+  </script>
+</body>
+
+</html>
