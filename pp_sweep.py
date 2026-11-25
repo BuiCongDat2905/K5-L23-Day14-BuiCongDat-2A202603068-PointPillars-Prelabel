@@ -58,10 +58,8 @@ def main(argv=None) -> int:
     grid = parse_grid(args.grid) or {"score_thr": ["0.1", "0.2", "0.3", "0.4", "0.5"]}
     names = vf_d14.read_frame_list(args.frames)
     rows = vf_d14.frame_rows(Path(args.data), names)
-    gt = vf_d14.load_reference(args.gt, Path(args.data), names)
-    if not gt:
-        raise SystemExit("Không có frame nào trong --gt trùng --frames.")
-    points = {r["name"]: vf_d14.load_points(r) for r in rows if r["name"] in gt}
+    gt = vf_d14.load_reference(args.gt, Path(args.data), names, require_all=True)
+    points = {r["name"]: vf_d14.load_points(r) for r in rows}
     keys = list(grid)
     combos = list(itertools.product(*grid.values()))
     print(f"{len(combos)} cấu hình × {len(points)} frame")

@@ -8,3 +8,7 @@ xem/
 __pycache__/
 *.zip
 .env
+Data-VF/
+data-VF/
+**/Data-VF/
+**/data-VF/

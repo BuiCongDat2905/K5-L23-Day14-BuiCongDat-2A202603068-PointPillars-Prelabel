@@ -17,8 +17,8 @@ requiredTools:
   - "Tùy chọn Docker (`Dockerfile` + `.dockerignore`) khi môi trường Python máy gặp sự cố."
 commonErrors:
   - "PowerShell 5.1 báo lỗi khi gõ `&&`, `source`, hoặc chặn `.venv\\Scripts\\Activate.ps1` → Chạy từng dòng riêng, bật `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass` và đặt `$env:PYTHONUTF8 = \"1\"` trước khi chạy."
-  - "Lưu đè `pred_*.json` hoặc `ref_*.json` bằng Notepad UTF-8 BOM gây lỗi `JSONDecodeError` → Tuyệt đối không dùng Notepad có BOM lưu đè file `.json` (bản repo hiện tại chỉ chịu BOM ở `frames_*.txt` và `--config`)."
-  - "Cuboid mới vẽ trên CVAT bị thiếu khi chạy `vf_cvat.py reference` (kèm cảnh báo `Track` trên `stderr`) → Trong popup vẽ cuboid, luôn chọn **`Shape`**, không bấm **`Track`**; xóa Track lỗi, vẽ lại bằng `Shape`, bấm Save rồi kéo lại."
+  - "Nếu JSON không đọc được, tạo lại dự đoán bằng `pp_prelabel.py` hoặc xuất lại nhãn từ CVAT bằng `vf_cvat.py reference`."
+  - "Lệnh `vf_cvat.py reference` dừng nếu còn Track. Vẽ lại các hộp đó bằng Shape, xóa Track, bấm Save rồi xuất lại. Nếu trùng tên task, kiểm các ID và đổi tên task bạn sẽ không xuất."
   - "Truyền `--org <SLUG>` khi chạy CVAT local Docker gây lỗi 404 không thấy tổ chức → Bỏ hẳn cờ `--org` trên CVAT local (`http://localhost:8080`); chỉ truyền `--org` thống nhất ở cả Bước 3, 5, 7 và 9 trên server lớp có organization."
   - "Docker báo `exit 137` (OOM) hoặc thoát container bị mất `d14_<ID>/` → Tắt CVAT Docker (`docker compose stop`) khi chạy model nếu WSL2 RAM <= 4 GB, và luôn mount `-v \"${PWD}\\work:/work\" -w /work`."
   - "`pp_sweep.py` báo `--grid ...: không có tham số này` → Luôn viết đủ dấu `=` dạng `--grid score_thr=0.1,0.2,0.3,0.4,0.5` và giữ mức gốc `0.1` trong lưới."
@@ -29,7 +29,11 @@ workMode: "individual"
 
 # Day 14 Lab — Pre-label 3D bằng PointPillars pre-trained (VF LiDAR)
 
-Bài thực hành cá nhân này kéo dài **245 phút thực hành** (**45 phút trong buổi lý thuyết sáng `09:00–13:00`** gồm Pha 0 `10′` + Pha 1 `35′`, và **200 phút buổi chiều `16:00–19:30`** gồm Pha 2–4) trên dữ liệu LiDAR 360° của Day 13. Bạn sẽ chạy model PointPillars đã huấn luyện sẵn trên tập KITTI (`zhulf0804/PointPillars`, giấy phép MIT, commit `620e6b0`) hoàn toàn bằng CPU mà không cần GPU hay biên dịch CUDA: hai phép toán CUDA gốc là `voxelize` và `rotated NMS` đã được thay bằng mã PyTorch thuần trong `vf_pp/upstream.py`, còn mã nguồn upstream không bị sửa dòng nào. Từ kết quả pre-label, bạn đẩy box lên CVAT 3D cá nhân, sửa tay 3 frame tập A làm nhãn tham chiếu, commit dự đoán Bước 5b rồi quét tham số đo mức giảm công sửa trên thước đo `0.3·xóa + 1.0·thêm + 0.5·sửa`, hoàn thiện 12 frame tập B (`ref_B.json`), viết báo cáo `report/individual/<MSSV>_<HoTen>.md` và đẩy lên repo `K5-L23-DAY14-HoVaTen-MSSV-PointPillarsPrelabel` để nộp link commit GitHub (có SHA) lên LMS trước **12:00 trưa hôm sau (GMT+7)**. Quy chuẩn chi tiết nằm ở [SUBMISSION.md](SUBMISSION.md), [RUBRIC.md](RUBRIC.md), [CHECKPOINTS.md](CHECKPOINTS.md), [RULES.md](RULES.md) và [report/individual/MSSV_HoTen.md](report/individual/MSSV_HoTen.md); tài liệu này không chứa mật khẩu, token hay nhãn đáp án.
+Bài cá nhân này có **245 phút thực hành**. Bạn dành 45 phút ở cuối buổi lý thuyết sáng (09:00–13:00), gồm 10 phút cài đặt và 35 phút chạy thử. Buổi chiều (16:00–19:30) có 200 phút làm tập A và B. Bạn chạy PointPillars đã huấn luyện trên KITTI trên dữ liệu LiDAR 360° của Day 13. Mô hình dùng CPU và mã PyTorch thay cho hai phép toán CUDA, nên máy không cần GPU. Mã PointPillars gốc giữ nguyên tại commit `620e6b0`.
+
+Tạo cuboid dự đoán, đưa lên CVAT rồi sửa 3 frame tập A để có nhãn tham chiếu. Ghi dự đoán và push báo cáo ở bước 5b trước khi thử nhiều cấu hình. Sau đó dùng cấu hình đã chọn cho 12 frame tập B, sửa nhãn và xuất `ref_B.json`.
+
+Đẩy bài lên repo `K5-L23-DAY14-HoVaTen-MSSV-PointPillarsPrelabel`. Nộp link commit có SHA lên LMS trước **12:00 trưa hôm sau (GMT+7)**. Xem [SUBMISSION.md](SUBMISSION.md) để biết file cần nộp và [RUBRIC.md](RUBRIC.md) để biết cách chấm. Theo dõi tiến độ bằng [CHECKPOINTS.md](CHECKPOINTS.md), đọc [RULES.md](RULES.md) và dùng [mẫu báo cáo cá nhân](report/individual/MSSV_HoTen.md).
 
 ## Pha 0 — Chuẩn bị máy, repository và kiểm cài đặt (Buổi lec sáng · 0:00 → 0:10 · 10 phút)
 
@@ -152,15 +156,15 @@ Ngay khi phần thực hành buổi chiều (`16:00–19:30`) bắt đầu, gi�
 
 Giữ đúng ba quy ước kỹ thuật sau trước khi chạy lệnh ở Pha 2:
 - **Giữ số `0` đầu mã `<ID>`:** `vf_common.normalize_student` chỉ viết hoa chữ, nên `"001"` và `"01"` tạo hai bộ frame và hai thư mục (`d14_001/` vs `d14_01/`) khác nhau; trên PowerShell luôn bọc `--student "001"`. Không sửa tay `frames_A.txt` hay `frames_B.txt`.
-- **Không lưu đè `.json` bằng Notepad BOM:** repo đã chịu BOM ở `frames_*.txt` và `--config`, nhưng `pred_*.json` và `ref_*.json` vẫn đọc `utf-8` thuần nên sẽ lỗi nếu lưu đè bằng Notepad UTF-8 BOM.
+- **Giữ nguyên file do script tạo.** Script đọc được BOM UTF-8 trong `frames_*.txt`, cấu hình, `pred_*.json` và `ref_*.json`. Nếu file JSON bị hỏng, tạo lại dự đoán bằng `pp_prelabel.py` hoặc xuất lại nhãn từ CVAT bằng `vf_cvat.py reference`.
 - **Cờ `--org <SLUG>` là tùy chọn:** bỏ hẳn `--org` khi chạy CVAT Docker cá nhân (`http://localhost:8080`, tránh lỗi 404); chỉ truyền thống nhất ở Bước 3, 5, 7 và 9 khi server lớp có organization.
 
 ### Lựa chọn thiết kế: chỉnh sửa trên pre-label thay vì vẽ lại từ đầu và bẫy `Shape` vs `Track`
 
-Bước 4 trên CVAT 3D mất khoảng 45 phút vì bạn **chỉnh vừa đủ từ pre-label** theo chuẩn Day 13 để tạo `ref_A.json` trung thực, thay vì xóa làm lại từ đầu (theo [RUBRIC.md](RUBRIC.md) mục 1, chỉ xóa mà không thêm box sót sẽ mất điểm). Các hộp pre-label có sẵn bốn thuộc tính `pp_id`, `score`, `warn` (cảnh báo kích thước theo `SIZE_RANGE`) và `note` giúp đối chiếu với ảnh BEV. Khi vẽ thêm hộp bị sót, CVAT đặt nút **`Shape`** cạnh **`Track`**. Vì `vf_cvat.py reference` chỉ đọc `shapes` và **bỏ qua `tracks`** (kèm cảnh báo `stderr`), luôn bấm **`Shape`**.
+Ở bước 4, hãy dành khoảng 45 phút để kiểm các hộp dự đoán trên CVAT và chỉnh theo hướng dẫn Day 13. Giữ hộp đúng, sửa hộp sai lớp hoặc lệch vị trí, xóa hộp thừa và thêm đối tượng bị sót. Rubric mục 1 chấm chất lượng nhãn tham chiếu tập A, gồm cả các đối tượng mô hình bỏ sót. Hộp có sẵn các thuộc tính `pp_id`, `score`, `warn` và `note` để đối chiếu với ảnh BEV. Khi thêm hộp mới, chọn **Shape**. Lệnh `vf_cvat.py reference` dừng nếu còn hộp dạng **Track**. Nếu lệnh báo trùng tên task, kiểm các ID trên CVAT và đổi tên task bạn sẽ không xuất.
 
 :::callout{tone="warning" title="Cảnh báo bắt buộc: luôn chọn Shape (KHÔNG chọn Track) và đối chiếu Items"}
-Khi thêm cuboid bị sót trên CVAT 3D, chỉ bấm **`Shape`**, tuyệt đối không bấm **`Track`**. Sau khi bấm **Save**, kiểm tra số hộp mà `vf_cvat.py reference` in cho từng frame phải khớp chỉ số **`Items`** trên CVAT.
+Nếu lệnh xuất báo có **Track**, vẽ lại các hộp đó bằng **Shape** rồi xóa Track. Bấm **Save** và chạy lại `reference`. Đối chiếu số hộp in ra cho từng frame với **Items** trên CVAT.
 :::
 
 ### Các bước thực hiện Bước 1–5 (Tập A)
@@ -233,23 +237,23 @@ python pp_prelabel.py --data "<Data-VF>" --frames "d14_<ID>/frames_A.txt" --gt "
 :::image{src="walkthrough_images/cvat_10_saved_clean_46_items.png" alt="Màn hình CVAT sau khi bấm Save với đủ 46 cuboid dạng Shape" caption="Bấm Save tới khi nút Save mờ đi trước khi chạy lệnh kéo nhãn tham chiếu về máy."}
 :::
 
-5. **Bước 5 — Kéo `ref_A.json` và đo baseline:** Chạy `vf_cvat.py reference --task A` xuất `d14_<ID>/ref_A.json`, xác nhận số box khớp `Items` và 0 cảnh báo `Track` (thêm `--scale-order wlh` nếu server đảo L/W). Chạy tiếp `pp_prelabel.py ... --gt d14_<ID>/ref_A.json` ghi nhận chi phí gốc tập A.
+5. **Bước 5.** Chạy `vf_cvat.py reference --task A` để xuất `d14_<ID>/ref_A.json`. Đối chiếu số hộp với **Items** trên CVAT. Nếu server đảo chiều dài và chiều rộng, thêm `--scale-order wlh`. Sau đó dùng `pp_prelabel.py` với `--gt d14_<ID>/ref_A.json` để đo chi phí của cấu hình gốc.
 
 ### Checkpoint Pha 2 và giờ nghỉ giải lao (1:45 → 1:55 · 10 phút)
 
-Pha 2 hoàn tất khi `d14_<ID>/` có đủ `frames_A.txt`, `frames_B.txt`, `pred_A.json` và `ref_A.json`, trong đó số hộp từ `vf_cvat.py reference --task A` khớp `100%` `Items` trên CVAT và không có cảnh báo `Track` trên `stderr`. Kết quả từ `pp_prelabel.py ... --gt d14_<ID>/ref_A.json` cho thấy chi phí trên tập A chủ yếu do xóa box thừa hay thêm vật sót. Sau đó nghỉ giải lao **10 phút (1:45 → 1:55)** và sao chép `report/individual/MSSV_HoTen.md` thành `report/individual/<MSSV>_<HoTen>.md` (không dấu) để chuẩn bị commit mục 1 (Bước 5b) đầu Pha 3.
+Trước khi nghỉ, kiểm tra `d14_<ID>/` có `frames_A.txt`, `frames_B.txt`, `pred_A.json` và `ref_A.json`. Kết quả xuất phải khớp số **Items** trên từng frame CVAT. Đọc số hộp cần xóa, thêm và sửa do `pp_prelabel.py` in ra để biết lỗi nào tốn nhiều công nhất với cấu hình gốc. Bạn sẽ dùng các số này và ảnh BEV để viết dự đoán. Trong **10 phút nghỉ (1:45 → 1:55)**, sao chép `report/individual/MSSV_HoTen.md` thành `report/individual/<MSSV>_<HoTen>.md` (không dấu). Bạn sẽ điền và push mục 1 ở bước 5b.
 
 ## Pha 3 — Bước 5b, Sweep và So sánh trước/sau trên Tập A (1:55 → 2:25 · 30 phút)
 
 ### Bản chất vấn đề: commit dự đoán trước khi sweep và rủi ro overfit trên 3 frame
 
-Mục đích trọng tâm của Pha 3 là kiểm nghiệm trực giác kỹ thuật bằng bằng chứng lịch sử Git trước khi đo số liệu thực nghiệm. Ở **Bước 5b**, bạn sao chép template `report/individual/MSSV_HoTen.md` thành `report/individual/<MSSV>_<HoTen>.md` (không dấu), viết mục 1 gồm 2 dòng dự đoán *trước* khi chạy `pp_sweep.py` (tham số nào giảm công sửa nhiều nhất và vì sao dựa trên ảnh BEV/baseline tập A), rồi **chạy `git commit -m "5b: dự đoán"` và `git push` ngay lên repo cá nhân `K5-L23-DAY14-HoVaTen-MSSV-PointPillarsPrelabel`**. Theo [RUBRIC.md](RUBRIC.md) mục 3 (`20 điểm`), nếu lịch sử commit cho thấy mục 1 được thêm hoặc sửa sau khi đã có `sweep.csv`, thứ tự trình bày trong báo cáo không đủ làm bằng chứng và mục này bị mất điểm; đoán sai nhưng đối chiếu giải thích đúng vẫn được đủ điểm.
+Ở bước 5b, viết hai dòng vào mục 1 báo cáo cá nhân. Dòng đầu nêu tham số bạn dự đoán sẽ giảm công sửa nhiều nhất. Dòng thứ hai giải thích dựa trên ảnh BEV và số hộp cần xóa, thêm hoặc sửa ở tập A. Dùng `git add` để đưa báo cáo vào commit `5b: dự đoán`. Push commit lên repo cá nhân `K5-L23-DAY14-HoVaTen-MSSV-PointPillarsPrelabel` và mở GitHub kiểm tra trước khi chạy `pp_sweep.py`. Sau sweep, giữ nguyên dự đoán ở mục 1 và ghi phần đối chiếu vào mục 3. Theo [RUBRIC.md](RUBRIC.md), dự đoán sai vẫn có thể được đủ 20 điểm nếu bạn giải thích đúng kết quả.
 
 ### Giải nghĩa cơ chế cache suy luận và kiểm tra chéo leave-one-out
 
-`pp_sweep.py` tách rạch ròi tham số mạng (`MODEL_KNOBS`: `voxel_size`, `intensity_mode`, `intensity_scale`, `ground_mode`, `delta_z`, `passes`, `nms_thr`, `nms_pre`, `max_num`) khỏi tham số hậu xử lý (`score_thr`, `min_points`, `range_m`). Với mỗi tổ hợp `MODEL_KNOBS`, model chỉ chạy một lần tại `score_thr = 0.05` rồi đệm kết quả trong RAM, nên lưới hậu xử lý chạy nhanh mà không tạo file tạm.
+`pp_sweep.py` lưu dự đoán thô trong bộ nhớ theo từng tổ hợp tham số trong `MODEL_KNOBS`. Với mỗi tổ hợp, mô hình chạy một lần trên từng frame với ngưỡng `score_thr = 0.05`. Khi chỉ đổi ngưỡng điểm hoặc các tham số hậu xử lý như `min_points` và `range_m`, script dùng lại dự đoán thô để khỏi chạy mô hình lần nữa.
 
-Cuối lượt quét, `pp_sweep.py` in **leave-one-out**: chọn cấu hình tốt nhất trên 2 frame còn lại, chấm lên frame giữ ra và so với điểm `oracle` riêng frame đó. Nếu kết quả nhảy mạnh giữa các frame, `best_config.json` đang có nguy cơ overfit vào 3 frame tập A; hãy dán và nhận xét phần này vào mục 2 báo cáo.
+Cuối lượt quét, đọc mục **leave-one-out**. Script lần lượt giữ một frame để kiểm và dùng hai frame còn lại để chọn cấu hình. Nó so chi phí của cấu hình đó với chi phí thấp nhất có thể trên frame kiểm, gọi là `oracle`. Nếu chênh lệch lớn, cấu hình có thể chỉ phù hợp với các frame dùng để chọn. Ghi kết quả từng lượt và nhận xét vào mục 2 báo cáo.
 
 ### Lựa chọn thiết kế: giữ mốc gốc `0.1` trong lưới và đọc ảnh BEV `52 m`
 
@@ -334,14 +338,14 @@ git rev-parse HEAD
 ```
 :::
 
-1. **Bước 7a–7b:** Chạy `pp_prelabel.py` với `--config d14_<ID>/best_config.json` trên `frames_B.txt` tạo `pred_B.json`, rồi đẩy lên CVAT tạo task `D14-<ID>-B` (12 frame). Kiểm tra trang **Tasks** hiện đủ cả `D14-<ID>-A` và `D14-<ID>-B`.
+1. **Bước 7a–7b.** Tạo `pred_B.json` từ `frames_B.txt` bằng cấu hình `best_config.json`. Nạp dự đoán lên CVAT để tạo task `D14-<ID>-B`. Kiểm tra trang **Tasks** có task A và task B. Khi tiếp tục trên task B đã tạo, dùng lại đúng file dự đoán đã nạp. Nếu script phát hiện file đã đổi, lệnh dừng và giữ nguyên nhãn cũ. Nếu script báo chưa thể đối chiếu, kiểm tra lại file đã nạp lúc tạo task. Trao đổi với coach trước khi tạo lại task vì `--replace` xóa toàn bộ nhãn đã sửa.
 
 :::image{src="walkthrough_images/cvat_11_tasks_A_and_B.png" alt="Trang Tasks trên CVAT hiển thị đầy đủ cả task D14-001-A và D14-001-B" caption="Trang Tasks trên CVAT sau khi tạo thành công cả task D14-001-A (3 frame) và D14-001-B (12 frame)."}
 :::
 
 2. **Bước 7c:** Mở đủ 12 frame của `D14-<ID>-B` trên CVAT 3D, sửa hộp lệch/sai lớp (`Car` → `Truck`/`Bus`), xóa hộp thừa, vẽ thêm mọi đối tượng sót trong `50 m` bằng **`Shape`** (không `Track`), rồi bấm **Save**.
-3. **Bước 9:** Chạy `vf_cvat.py reference --task B` xuất `d14_<ID>/ref_B.json` (đủ 12 frame, khớp `Items`, 0 cảnh báo `Track`, không trùng nguyên `pred_B.json`). Chạy tiếp `pp_prelabel.py ... --gt d14_<ID>/ref_B.json` ghi số xóa/thêm/sửa/chi phí vào mục 4 và nêu ít nhất 2 giới hạn vào mục 5 trong `report/individual/<MSSV>_<HoTen>.md` (không phóng đại `%` hay gọi `cost` là "tiết kiệm X giờ công").
-4. **Commit & nộp LMS:** Nếu chưa đổi remote ở bước 5b, chạy `git remote set-url origin https://github.com/<tài-khoản>/K5-L23-DAY14-HoVaTen-MSSV-PointPillarsPrelabel.git` và `git branch -M main`. Sau đó chạy `git add d14_<ID> report`, `git commit -m "Day 14: bài nộp"`, `git push -u origin main`, lấy SHA từ `git rev-parse HEAD` và nộp link `https://github.com/<tài-khoản>/K5-L23-DAY14-HoVaTen-MSSV-PointPillarsPrelabel/commit/<SHA>` lên LMS trước **12:00 trưa hôm sau (GMT+7)**.
+3. **Bước 9.** Xuất `d14_<ID>/ref_B.json` và kiểm tra đủ 12 frame. Đối chiếu số hộp xuất với **Items** trên CVAT. Chạy lệnh đo công sửa tập B ở [bước 9 trong README](README.md#xuất-nhãn-và-đo-công-sửa-tập-b-bước-9). Ghi số hộp cần xóa, thêm, sửa và chi phí vào mục 4. Nêu ít nhất hai giới hạn trong mục 5 báo cáo.
+4. **Nộp bài.** Chạy lệnh Git theo [SUBMISSION.md](SUBMISSION.md#1-repo-nộp) từ gốc repo. Thay `<ID>` bằng mã trong tên thư mục đã tạo ở bước 1. Mở commit bạn vừa push lên repo cá nhân, rồi nộp link commit trên LMS trước **12:00 trưa hôm sau (GMT+7)**.
 
 ```text
 K5-L23-DAY14-HoVaTen-MSSV-PointPillarsPrelabel/
@@ -365,7 +369,7 @@ Trước khi dán link commit lên LMS, hãy mở repo `K5-L23-DAY14-HoVaTen-MSS
 :::checklist{title="Checklist bàn giao cuối bài Lab Day 14" tone="success"}
 - [ ] `frames_A.txt` và `frames_B.txt` giữ nguyên `seed_tag=` và mã `<ID>` có số `0` đầu.
 - [ ] Mục 1 báo cáo (`5b: dự đoán`) đã commit và push trước `sweep.csv`.
-- [ ] `ref_A.json` và `ref_B.json` khớp `Items`, không `Track`, không BOM, khác `pred_B.json`.
+- [ ] Số hộp trong `ref_A.json` và `ref_B.json` khớp **Items** trên CVAT.
 - [ ] Đã chạy `pp_prelabel.py --gt ref_B.json` và điền đủ 5 mục báo cáo.
 - [ ] Repo `K5-L23-DAY14-HoVaTen-MSSV-PointPillarsPrelabel` đủ file theo `SUBMISSION.md`, đã bỏ qua `png_*/`.
 - [ ] Đã nộp link commit `git rev-parse HEAD` lên LMS trước 12:00 trưa hôm sau.

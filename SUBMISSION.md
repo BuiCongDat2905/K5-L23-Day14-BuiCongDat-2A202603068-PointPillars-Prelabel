@@ -6,13 +6,12 @@ Bài **cá nhân**. Mỗi học viên nộp **link tới commit bài nộp** tro
 
 - Tên repo: `K5-L23-DAY14-HoVaTen-MSSV-PointPillarsPrelabel`, viết không dấu, không khoảng trắng.
   Ví dụ: `K5-L23-DAY14-NguyenVanAn-2A20260000-PointPillarsPrelabel`.
-- Tạo repo mới trên GitHub với tên trên, rồi đẩy thư mục lab đã làm lên đó:
+- Tạo repo cá nhân trống trên GitHub trước bước 5b. Dùng [lệnh đẩy dự đoán trong README](README.md#đẩy-dự-đoán-trước-sweep-bước-5b) để lưu bằng chứng trước sweep.
+- Khi hoàn thành, chạy các lệnh dưới đây từ gốc repo. Thay `<ID>` bằng mã trong tên thư mục đã tạo ở bước 1. Bài nộp được đẩy lên cùng repo cá nhân bạn đã dùng ở bước 5b.
 
   ```bash
-  git remote set-url origin https://github.com/<tài-khoản>/K5-L23-DAY14-HoVaTen-MSSV-PointPillarsPrelabel.git
-  git add d14_<ID> report
+  git add "d14_<ID>" report
   git commit -m "Day 14: bài nộp"
-  git branch -M main
   git push -u origin main
   git rev-parse HEAD   # SHA của commit bài nộp
   ```
@@ -37,7 +36,7 @@ Không commit: thư mục dữ liệu `Data-VF`, `third_party/`, mật khẩu CV
 
 - Nộp lên LMS, bằng tài khoản của chính bạn, **link commit** dạng `https://github.com/<tài-khoản>/<repo>/commit/<SHA>` (SHA lấy từ `git rev-parse HEAD` sau khi push). Coach chấm đúng commit này, không chấm nhánh `main` lúc mở repo.
 - Sửa bài trước deadline: push commit mới rồi cập nhật link commit trên LMS. Không force-push, không xóa commit đã nộp.
-- Deadline: **12:00 trưa ngày hôm sau ngày lab** (giờ Việt Nam, GMT+7).
+- Hạn nộp là **12:00 trưa ngày sau buổi lab** (giờ Việt Nam, GMT+7).
 - Nộp muộn và sửa bài sau deadline: xem [RULES.md](RULES.md).
 
 ## 4. Tự kiểm trước khi nộp
@@ -47,6 +46,6 @@ Không commit: thư mục dữ liệu `Data-VF`, `third_party/`, mật khẩu CV
 - [ ] Mở repo trên GitHub, thấy đủ các file ở mục 2.
 - [ ] `frames_A.txt` và `frames_B.txt` vẫn có dòng `seed_tag=` do lệnh bước 1 sinh ra.
 - [ ] `ref_B.json` có đủ 12 frame của `frames_B.txt`, được kéo về **sau khi** đã Save trên CVAT.
-- [ ] Đã chạy `python pp_prelabel.py --data <Data-VF> --frames d14_<ID>/frames_B.txt --config d14_<ID>/best_config.json --gt d14_<ID>/ref_B.json` và ghi số xóa/thêm/sửa vào báo cáo.
+- [ ] Đã đo công sửa theo [bước 9 trong README](README.md#xuất-nhãn-và-đo-công-sửa-tập-b-bước-9) và ghi số hộp cần xóa, thêm, sửa vào mục 4 báo cáo.
 - [ ] Đã commit và push mục 1 báo cáo (dự đoán 5b) **trước** khi chạy sweep, ví dụ `git commit -m "5b: dự đoán"`.
 - [ ] Báo cáo có 1 ảnh compare và phần đối chiếu.
