@@ -100,7 +100,16 @@ class TestStudentGuideDeliverables(unittest.TestCase):
         # Key required lab facts
         for required in (
             "https://github.com/VinUni-AI20k/K5-L23-Day14-PointPillars-Prelabel",
-            "K5-DAY14-HoVaTen-MSSV",
+            "K5-L23-DAY14-HoVaTen-MSSV-PointPillarsPrelabel",
+            "SUBMISSION.md",
+            "RUBRIC.md",
+            "CHECKPOINTS.md",
+            "RULES.md",
+            "report/individual/",
+            "d14_*/png_*/",
+            "5b: dự đoán",
+            "git rev-parse HEAD",
+            "12:00",
             "ref_B.json",
             "Shape",
             "Track",
@@ -110,6 +119,8 @@ class TestStudentGuideDeliverables(unittest.TestCase):
             "key=vals",
         ):
             self.assertIn(required, text)
+        self.assertNotIn("K5-DAY14-HoVaTen-MSSV", text)
+        self.assertNotIn("Khác với trước đây", text)
 
     def test_student_markdown_step_depth_and_reader_blocks_budgets(self) -> None:
         text = self.STUDENT_MD.read_text(encoding="utf-8")
@@ -194,19 +205,86 @@ class TestStudentGuideDeliverables(unittest.TestCase):
         for cm_inner in re.findall(r'<pre><span class="cm">([^<]*)</span>', archive_html):
             self.assertTrue(cm_inner.endswith("\n"), f"Missing trailing newline in comment span: {cm_inner!r}")
 
-        # Every subToc target must exist in deepArchive and duration sum must equal 240
+        # Every subToc target and title must match deepArchive and duration sum must equal 240
         phases = json.loads(re.search(r"const PHASES = (\[.*?\]);", html, re.S).group(1))
         self.assertEqual(sum(p["dur"] for p in phases), 240)
-        deep_ids = set(re.findall(r'<h4 id="([^"]+)"', html))
+        h4_titles = {
+            hid: re.sub(r"<[^>]+>", "", htext)
+            for hid, htext in re.findall(r'<h4 id="([^"]+)"[^>]*>(.*?)</h4>', html, re.S)
+        }
         for p in phases:
-            for sid, _ in p["subToc"]:
-                self.assertIn(sid, deep_ids, f"Missing subToc ID {sid!r} in HTML")
+            for sid, title in p["subToc"]:
+                self.assertIn(sid, h4_titles, f"Missing subToc ID {sid!r} in HTML")
+                self.assertEqual(h4_titles[sid], title, f"subToc title mismatch for {sid!r}")
+
+        figs = re.findall(r"<figure[^>]*>.*?</figure>", html, re.S)
+        self.assertEqual(len(figs), 16)
+        for idx, fig in enumerate(figs, start=1):
+            self.assertIn('class="lab-figure"', fig, f"Figure #{idx} missing lab-figure class")
+            self.assertIn('onclick="openLightbox(this)"', fig, f"Figure #{idx} missing openLightbox handler")
 
         imgs_html = re.findall(r'<img src="(walkthrough_images/[^"]+)"', html)
         imgs_disk = sorted(p.relative_to(REPO_ROOT).as_posix() for p in self.WALKTHROUGH_DIR.iterdir() if p.is_file())
         for src in imgs_html:
             self.assertTrue((REPO_ROOT / src).is_file(), f"Missing image referenced in HTML: {src}")
         self.assertEqual(set(imgs_html), set(imgs_disk), "Orphan or unreferenced walkthrough_images in HTML")
+
+        for required in (
+            "K5-L23-DAY14-HoVaTen-MSSV-PointPillarsPrelabel",
+            "SUBMISSION.md",
+            "RUBRIC.md",
+            "CHECKPOINTS.md",
+            "RULES.md",
+            "report/individual/",
+            "d14_*/png_*/",
+            "5b: dự đoán",
+            "git rev-parse HEAD",
+            "12:00",
+        ):
+            self.assertIn(required, html)
+        self.assertNotIn("K5-DAY14-HoVaTen-MSSV", html)
+        self.assertNotIn("Khác với trước đây", html)
+
+    def test_submission_docs_gitignore_and_readme_sync(self) -> None:
+        for rel in (
+            "SUBMISSION.md",
+            "RUBRIC.md",
+            "CHECKPOINTS.md",
+            "RULES.md",
+            "report/individual/MSSV_HoTen.md",
+        ):
+            self.assertTrue((REPO_ROOT / rel).is_file(), f"Missing {rel}")
+
+        gitignore_lines = [ln.strip() for ln in (REPO_ROOT / ".gitignore").read_text(encoding="utf-8").splitlines()]
+        self.assertIn("d14_*/png_*/", gitignore_lines)
+        self.assertIn(".venv/", gitignore_lines)
+        self.assertNotIn("d14_*/", gitignore_lines)
+
+        bonus_readme = (REPO_ROOT / "bonus" / "README.md").read_text(encoding="utf-8")
+        self.assertIn("SUBMISSION.md", bonus_readme)
+
+        readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+        for required in (
+            "12:00 trưa hôm sau",
+            "SUBMISSION.md",
+            "RUBRIC.md",
+            "CHECKPOINTS.md",
+            "RULES.md",
+            "report/individual/MSSV_HoTen.md",
+            "Set-ExecutionPolicy",
+            "$env:PYTHONUTF8",
+            "[--org <SLUG>]",
+            "Shape",
+            "Track",
+            "note",
+            "score_thr=0.1,0.2,0.3,0.4,0.5",
+            "50 m",
+            "2.3°",
+            "ref_B.json",
+        ):
+            self.assertIn(required, readme)
+        self.assertNotIn("K5-DAY14-HoVaTen-MSSV", readme)
+        self.assertNotIn("## 6. Nộp bài", readme)
 
     def test_student_pdf_exists_and_is_valid_a4(self) -> None:
         self.assertTrue(self.STUDENT_PDF.is_file(), "Missing student PDF guide")
@@ -229,6 +307,16 @@ class TestStudentGuideDeliverables(unittest.TestCase):
         self.assertIn("Trang 1 /", full_text)
         self.assertNotIn("**", full_text, "Literal '**' found in exported PDF text")
         self._assert_clean_student_text(full_text, self.STUDENT_PDF.name)
+        for required in (
+            "K5-L23-DAY14-HoVaTen-MSSV-PointPillarsPrelabel",
+            "SUBMISSION.md",
+            "git rev-parse HEAD",
+            "d14_*/png_*/",
+            "12:00",
+        ):
+            self.assertIn(required, full_text)
+        self.assertNotIn("K5-DAY14-HoVaTen-MSSV", full_text)
+        self.assertNotIn("Khác với trước đây", full_text)
 
 
 if __name__ == "__main__":
