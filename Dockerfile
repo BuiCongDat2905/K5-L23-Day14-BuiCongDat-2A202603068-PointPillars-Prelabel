@@ -6,5 +6,8 @@ RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/wh
  && pip install --no-cache-dir -r requirements.txt
 COPY . .
 RUN python setup_pp.py
-# docker run --rm -v <Data-VF>:/data -v $PWD/d14:/lab/out <image> python pp_selftest.py --data /data
+# Windows PowerShell (tắt CVAT Docker khi chạy model nếu WSL2 RAM <= 4 GB):
+#   docker run --rm -v "C:\path\Data-VF:/data" -v "${PWD}\work:/work" -w /work <image> python /lab/pp_selftest.py --data /data
+#   docker run --rm -v "C:\path\Data-VF:/data" -v "${PWD}\work:/work" -w /work <image> python /lab/vf_cvat.py day14 --student 001 --seed <SEED> --data /data
+# Kết nối CVAT trên máy host từ trong container dùng: --host http://host.docker.internal:8080
 CMD ["python", "pp_selftest.py"]

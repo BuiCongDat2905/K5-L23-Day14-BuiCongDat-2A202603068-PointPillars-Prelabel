@@ -22,6 +22,8 @@ def check(name, ok, detail=""):
 
 
 def main() -> int:
+    import vf_common  # stdlib-only, safe before dependencies are installed
+    vf_common.configure_utf8_stdio()
     ap = argparse.ArgumentParser()
     ap.add_argument("--data")
     args = ap.parse_args()
