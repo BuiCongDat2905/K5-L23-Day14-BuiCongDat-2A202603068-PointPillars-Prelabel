@@ -50,9 +50,8 @@ def from_zip(path: Path) -> None:
 
 
 def main() -> int:
-    for _s in (sys.stdout, sys.stderr):
-        if hasattr(_s, "reconfigure"):
-            _s.reconfigure(encoding="utf-8", errors="replace")
+    import vf_common  # stdlib-only, safe before dependencies are installed
+    vf_common.configure_utf8_stdio()
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--zip", help="đường dẫn zip đã tải sẵn")
     ap.add_argument("--download-zip", action="store_true", help="tải zip của commit qua HTTPS (không cần git)")
