@@ -1,6 +1,6 @@
 """Check the install in ~30 s: model loads, CPU ops agree with a brute-force reference, one frame runs.
 
-    python pp_selftest.py [--data <Data-VF>]
+    python scripts/pp_selftest.py [--data <Data-VF>]
 """
 
 from __future__ import annotations
@@ -12,7 +12,8 @@ import time
 import warnings
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+if not __package__:
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 warnings.filterwarnings("ignore", message="torch.meshgrid")
 
 
@@ -22,7 +23,7 @@ def check(name, ok, detail=""):
 
 
 def main() -> int:
-    import vf_common  # stdlib-only, safe before dependencies are installed
+    from scripts import vf_common  # stdlib-only, safe before dependencies are installed
     vf_common.configure_utf8_stdio()
     ap = argparse.ArgumentParser()
     ap.add_argument("--data")
@@ -52,7 +53,7 @@ def main() -> int:
     det = Detector(Config())
     ok &= check("model + weights", True, f"{time.time() - start:.1f}s")
     if args.data:
-        import vf_d14
+        from scripts import vf_d14
         row = vf_d14.frame_rows(Path(args.data), ["s05f40"])[0]
         start = time.time()
         boxes = det.detect(vf_d14.load_points(row))

@@ -3,7 +3,7 @@
 The upstream repo has two compiled extensions (voxelization in C++/CUDA and the
 rotated NMS in CUDA). This module registers pure-PyTorch replacements under the
 same import names, then imports ``pointpillars/model/*.py`` straight from the
-pinned checkout made by ``setup_pp.py``. No upstream file is edited.
+pinned checkout made by ``scripts/setup_pp.py``. No upstream file is edited.
 """
 
 from __future__ import annotations
@@ -219,7 +219,7 @@ def _import_file(name: str, path: Path):
 def check_installed() -> None:
     missing = [p for p in (UPSTREAM / "pointpillars" / "model" / "pointpillars.py", WEIGHTS) if not p.exists()]
     if missing:
-        raise SystemExit("Chưa có mã PointPillars. Chạy trước: python setup_pp.py\n  thiếu: "
+        raise SystemExit("Chưa có mã PointPillars. Chạy trước: python scripts/setup_pp.py\n  thiếu: "
                          + ", ".join(str(p) for p in missing))
 
 

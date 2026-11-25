@@ -3,8 +3,8 @@
 Both commands read only your table A, the LiDAR ``.bin`` files and ``calib.json``.
 They never read ground truth and give no score::
 
-    python vf_cvat.py preview d13 --student <ID> --data <data-VF> --table nop/D13-<ID>-bangA.csv --out ./xem
-    python vf_cvat.py check d13 --student <ID> --data <data-VF> --table nop/D13-<ID>-bangA.csv
+    python scripts/vf_cvat.py preview d13 --student <ID> --data <data-VF> --table nop/D13-<ID>-bangA.csv --out ./xem
+    python scripts/vf_cvat.py check d13 --student <ID> --data <data-VF> --table nop/D13-<ID>-bangA.csv
 
 ``calib.json`` (one per sequence): ``cam_to_velo`` maps camera points to LiDAR
 points, so LiDAR → camera uses its inverse; ``distortion`` holds the OpenCV
@@ -19,7 +19,7 @@ import math
 from collections import defaultdict
 from pathlib import Path
 
-import vf_common as vf
+from scripts import vf_common as vf
 
 # 12 edges of a cuboid whose corners come from ``box_corners``: bottom 0-3, top 4-7.
 BOX_EDGES = [(0, 1), (1, 2), (2, 3), (3, 0), (4, 5), (5, 6), (6, 7), (7, 4), (0, 4), (1, 5), (2, 6), (3, 7)]

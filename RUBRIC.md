@@ -4,7 +4,7 @@
 
 ## Điều kiện bắt buộc
 
-Coach checkout đúng commit bạn nộp trên LMS, rồi chạy `check_student.py` với SEED của buổi lab trên `d14_<ID>/frames_A.txt` và `frames_B.txt`. Nếu kết quả là **CÓ VẤN ĐỀ** (sai SEED, sai mã học viên, hoặc danh sách frame bị sửa tay), các mục 1–5 bên dưới không được chấm.
+Coach checkout đúng commit bạn nộp trên LMS rồi dùng `check_student.py` và SEED của buổi lab để kiểm tra `d14_<ID>/frames_A.txt` và `frames_B.txt`. Khi chạy checker, coach trỏ `--lab` vào thư mục `scripts/` của repo đề. Nếu kết quả là **CÓ VẤN ĐỀ** (sai SEED, sai mã học viên, hoặc danh sách frame bị sửa tay), các mục 1–5 bên dưới không được chấm.
 
 ## Điểm chính
 

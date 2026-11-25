@@ -10,10 +10,11 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+SCRIPTS = ROOT / "scripts"
 sys.path.insert(0, str(ROOT))
 
-import vf_common as vf  # noqa: E402
-import vf_d14  # noqa: E402
+from scripts import vf_common as vf  # noqa: E402
+from scripts import vf_d14  # noqa: E402
 
 
 def _clean_env() -> dict[str, str]:
@@ -47,7 +48,7 @@ class TestWindowsEncoding(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "frames.txt"
             path.write_text("# Đợt 1 - Thời điểm\ns02f07\n", encoding="utf-8")
-            res = _run_py(["-c", "import sys, vf_d14; print(vf_d14.read_frame_list(sys.argv[1]))", str(path)])
+            res = _run_py(["-c", "import sys; from scripts import vf_d14; print(vf_d14.read_frame_list(sys.argv[1]))", str(path)])
             self.assertEqual(res.returncode, 0, res.stderr.decode("utf-8", errors="replace"))
             self.assertIn("['s02f07']", res.stdout.decode("utf-8", errors="replace"))
 
@@ -66,7 +67,7 @@ class TestWindowsEncoding(unittest.TestCase):
                     res = _run_py([
                         "-c",
                         (
-                            "import sys, pp_prelabel; "
+                            "import sys; from scripts import pp_prelabel; "
                             "c = pp_prelabel.load_config(sys.argv[1], []); "
                             "assert c.score_thr == 0.4 and c.extra['note'] == 'Đợt 1'"
                         ),
@@ -79,21 +80,21 @@ class TestWindowsEncoding(unittest.TestCase):
             tmp_dir = Path(tmp)
             stub_data = _make_stub_data(tmp_dir)
             invocations: list[tuple[str, list[str], Path, bool, str | None]] = [
-                ("pp_selftest.py", [str(ROOT / "pp_selftest.py")], ROOT, True, None),
+                ("pp_selftest.py", [str(SCRIPTS / "pp_selftest.py")], ROOT, True, None),
                 (
                     "vf_cvat.py day14",
-                    [str(ROOT / "vf_cvat.py"), "day14", "--student", "STU01", "--seed", "LABSEED", "--data", str(stub_data)],
+                    [str(SCRIPTS / "vf_cvat.py"), "day14", "--student", "STU01", "--seed", "LABSEED", "--data", str(stub_data)],
                     tmp_dir,
                     True,
                     None,
                 ),
-                ("pp_prelabel.py --help", [str(ROOT / "pp_prelabel.py"), "--help"], ROOT, True, None),
-                ("pp_sweep.py --help", [str(ROOT / "pp_sweep.py"), "--help"], ROOT, True, None),
-                ("pp_compare.py --help", [str(ROOT / "pp_compare.py"), "--help"], ROOT, True, None),
-                ("setup_pp.py --help", [str(ROOT / "setup_pp.py"), "--help"], ROOT, True, None),
+                ("pp_prelabel.py --help", [str(SCRIPTS / "pp_prelabel.py"), "--help"], ROOT, True, None),
+                ("pp_sweep.py --help", [str(SCRIPTS / "pp_sweep.py"), "--help"], ROOT, True, None),
+                ("pp_compare.py --help", [str(SCRIPTS / "pp_compare.py"), "--help"], ROOT, True, None),
+                ("setup_pp.py --help", [str(SCRIPTS / "setup_pp.py"), "--help"], ROOT, True, None),
                 (
                     "pp_prelabel.py --set invalid",
-                    [str(ROOT / "pp_prelabel.py"), "--data", str(stub_data), "--frames", "s02f07", "--set", "bad_key=1"],
+                    [str(SCRIPTS / "pp_prelabel.py"), "--data", str(stub_data), "--frames", "s02f07", "--set", "bad_key=1"],
                     tmp_dir,
                     False,
                     "không có tham số này",
@@ -101,7 +102,7 @@ class TestWindowsEncoding(unittest.TestCase):
                 (
                     "pp_sweep.py --grid invalid",
                     [
-                        str(ROOT / "pp_sweep.py"),
+                        str(SCRIPTS / "pp_sweep.py"),
                         "--data", str(stub_data),
                         "--frames", "s02f07",
                         "--gt", "missing.json",
@@ -114,7 +115,7 @@ class TestWindowsEncoding(unittest.TestCase):
                 (
                     "pp_compare.py missing gt",
                     [
-                        str(ROOT / "pp_compare.py"),
+                        str(SCRIPTS / "pp_compare.py"),
                         "--data", str(stub_data),
                         "--frames", "s02f07",
                         "--gt", "missing.json",
@@ -127,7 +128,7 @@ class TestWindowsEncoding(unittest.TestCase):
                 ),
             ]
             if (ROOT / "third_party" / "PointPillars" / "pretrained" / "epoch_160.pth").exists():
-                invocations.append(("setup_pp.py", [str(ROOT / "setup_pp.py")], ROOT, True, None))
+                invocations.append(("setup_pp.py", [str(SCRIPTS / "setup_pp.py")], ROOT, True, None))
 
             for label, args, cwd, expect_zero, expect_stderr_substr in invocations:
                 with self.subTest(cmd=label):

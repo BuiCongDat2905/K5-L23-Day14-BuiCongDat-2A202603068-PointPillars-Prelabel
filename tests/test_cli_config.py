@@ -11,8 +11,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-import pp_prelabel  # noqa: E402
-import pp_sweep  # noqa: E402
+from scripts import pp_prelabel  # noqa: E402
+from scripts import pp_sweep  # noqa: E402
 from vf_pp.core import Config  # noqa: E402
 
 

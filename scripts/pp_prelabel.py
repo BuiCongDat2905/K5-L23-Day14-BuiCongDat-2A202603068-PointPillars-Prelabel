@@ -3,10 +3,10 @@
 Examples::
 
     # buổi giảng: 6 frame chung
-    python pp_prelabel.py --data <Data-VF> --frames demo/frames_lec.txt --out out/lec.json --plot out/lec_png
+    python scripts/pp_prelabel.py --data <Data-VF> --frames demo/frames_lec.txt --out out/lec.json --plot out/lec_png
 
     # lab: frame tập A của bạn, cấu hình đã tune, so với ref_A.json bạn tự sửa trên CVAT
-    python pp_prelabel.py --data <Data-VF> --frames d14_<ID>/frames_A.txt --config my_config.json \
+    python scripts/pp_prelabel.py --data <Data-VF> --frames d14_<ID>/frames_A.txt --config my_config.json \
         --gt d14_<ID>/ref_A.json
 """
 
@@ -22,11 +22,12 @@ from collections import Counter
 from dataclasses import replace
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+if not __package__:
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 warnings.filterwarnings("ignore", message="torch.meshgrid")
 
-import vf_common as vf  # noqa: E402
-import vf_d14  # noqa: E402
+from scripts import vf_common as vf  # noqa: E402
+from scripts import vf_d14  # noqa: E402
 from vf_pp.core import VF_NAMES, Config, Detector, correction_cost  # noqa: E402
 
 OPTIONAL_FIELDS = {"thr_car", "thr_cyc", "thr_ped"}
@@ -141,7 +142,7 @@ def main(argv=None) -> int:
     ap.add_argument("--config", help="file JSON cấu hình (mặc định: cấu hình gốc của model)")
     ap.add_argument("--set", action="append", default=[], metavar="KEY=VALUE",
                     help="ghi đè 1 tham số, ví dụ --set score_thr=0.3 (lặp được)")
-    ap.add_argument("--out", help="ghi box ra JSON (đưa vào vf_cvat.py prelabel)")
+    ap.add_argument("--out", help="ghi box ra JSON (đưa vào scripts/vf_cvat.py prelabel)")
     ap.add_argument("--gt", help="ref_*.json hoặc thư mục nhãn để tính chi phí sửa")
     ap.add_argument("--plot", help="thư mục ghi ảnh 7 camera + BEV cho từng frame")
     args = ap.parse_args(argv)
@@ -174,7 +175,7 @@ def main(argv=None) -> int:
         vf_d14.save_boxes(Path(args.out), results, {"config": cfg.to_dict(), "frames": names})
         print(f"Đã ghi {args.out}")
     if args.plot:
-        import vf_qa
+        from scripts import vf_qa
         out = Path(args.plot)
         out.mkdir(parents=True, exist_ok=True)
         calibs = {}

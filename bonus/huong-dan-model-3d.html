@@ -50,7 +50,7 @@
 <pre><code>docker compose -f docker-compose.yml \
   -f components/serverless/docker-compose.serverless.yml up -d</code></pre>
 <p>Cài <code>nuctl</code> đúng phiên bản dashboard (xem tag image <code>quay.io/nuclio/dashboard</code> trong file serverless compose). Mac Apple Silicon: dùng image dashboard có hậu tố <code>-arm64</code> để function build native, nhanh hơn nhiều so với giả lập amd64.</p>
-<p>Dùng luôn task 3D đã tạo ở phần bắt buộc (hoặc tạo task mới bằng <code>vf_cvat.py</code>) và ghi lại <b>task id</b>.</p>
+<p>Dùng luôn task 3D đã tạo ở phần bắt buộc (hoặc tạo task mới bằng <code>scripts/vf_cvat.py</code>) và ghi lại <b>task id</b>.</p>
 
 <h2 id="s2">2. Viết function</h2>
 <p>Một thư mục gồm <code>function.yaml</code>, <code>main.py</code> và bản sao thư mục <code>vf_pp/</code> cùng trọng số. Nuclio chỉ build những gì nằm trong thư mục này.</p>

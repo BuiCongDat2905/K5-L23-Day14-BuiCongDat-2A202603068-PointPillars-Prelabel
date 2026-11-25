@@ -1,6 +1,6 @@
 """Before / after: default config vs your tuned config, scored against your reference labels.
 
-    python pp_compare.py --data <Data-VF> --frames d14_<ID>/frames_A.txt --gt d14_<ID>/ref_A.json \
+    python scripts/pp_compare.py --data <Data-VF> --frames d14_<ID>/frames_A.txt --gt d14_<ID>/ref_A.json \
         --tuned d14_<ID>/best_config.json --out d14_<ID>/compare
 
 For each frame it writes one image: BEV of the default config on the left, your
@@ -21,12 +21,13 @@ import sys
 import warnings
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+if not __package__:
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 warnings.filterwarnings("ignore", message="torch.meshgrid")
 
-import vf_common as vf  # noqa: E402
-import vf_d14  # noqa: E402
-from pp_prelabel import load_config  # noqa: E402
+from scripts import vf_common as vf  # noqa: E402
+from scripts import vf_d14  # noqa: E402
+from scripts.pp_prelabel import load_config  # noqa: E402
 from vf_pp.core import Config, Detector, correction_cost, needs_edit, within_range  # noqa: E402
 
 GREEN, YELLOW, RED, BLUE = (0, 230, 118), (255, 234, 0), (255, 23, 68), (41, 121, 255)
@@ -85,7 +86,7 @@ def main(argv=None) -> int:
     args = ap.parse_args(argv)
 
     from PIL import Image, ImageDraw
-    import vf_qa
+    from scripts import vf_qa
 
     data, out = Path(args.data), Path(args.out)
     names = vf_d14.read_frame_list(args.frames)

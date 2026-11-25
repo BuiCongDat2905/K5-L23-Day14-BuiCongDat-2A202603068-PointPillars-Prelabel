@@ -13,9 +13,13 @@ import os
 import random
 from pathlib import Path
 
-import vf_common as vf
+if __package__:
+    from . import vf_common as vf
+else:
+    # The coach checker loads this module directly from its --lab directory.
+    import vf_common as vf
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[1]
 LECTURE_FRAMES = [line.split()[0] for line in (ROOT / "demo" / "frames_lec.txt").read_text(encoding="utf-8-sig").splitlines()
                   if line.strip() and not line.lstrip().startswith("#")]
 SEED_ENV = "D14_SEED"

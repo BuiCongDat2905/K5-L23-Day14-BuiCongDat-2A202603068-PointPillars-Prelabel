@@ -27,5 +27,5 @@
 
 ## Bảo mật
 
-- Không commit mật khẩu CVAT. `vf_cvat.py` đọc mật khẩu từ biến môi trường `CVAT_PASSWORD` hoặc hỏi khi chạy.
+- Không commit mật khẩu CVAT. `scripts/vf_cvat.py` đọc mật khẩu từ biến môi trường `CVAT_PASSWORD` hoặc hỏi khi chạy.
 - Không commit dữ liệu `Data-VF` hay file `.env`. Không chia sẻ link và mật khẩu dữ liệu ra ngoài lớp.

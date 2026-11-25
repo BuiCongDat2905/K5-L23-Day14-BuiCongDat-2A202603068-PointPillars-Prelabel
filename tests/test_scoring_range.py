@@ -47,21 +47,21 @@ class TestScoringRange(unittest.TestCase):
         self.assertEqual((c["add"], c["delete"], c["cost"]), (1, 1, 1.3))
 
     def test_compare_view_hides_far_boxes(self):
-        import pp_compare
+        from scripts import pp_compare
 
         drawn = pp_compare.classify([box(10.0, 0.0), box(60.0, 0.0)], [box(10.0, 0.0), box(0.0, 70.0)])
         self.assertTrue(all(math.hypot(b["x"], b["y"]) <= MAX_RANGE for b, _ in drawn))
         self.assertEqual([c for _, c in drawn], [pp_compare.GREEN])
 
     def test_compare_bev_displays_boxes_at_50m_boundary(self):
-        import pp_compare
+        from scripts import pp_compare
 
         img = pp_compare.bev([], [(box(0.0, -48.0), pp_compare.BLUE)], "50m")
         colors = {c for _, c in img.getcolors(maxcolors=img.width * img.height)}
         self.assertIn((41, 121, 255), colors)
 
     def test_qa_bev_tile_displays_boxes_at_50m_boundary(self):
-        import vf_qa
+        from scripts import vf_qa
 
         b = {**box(0.0, -48.0, label="Car"), "idx": 1}
         img = vf_qa._bev_tile([], [b], (640, 340))

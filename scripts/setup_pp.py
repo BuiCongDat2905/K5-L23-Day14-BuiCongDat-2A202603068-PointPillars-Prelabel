@@ -1,7 +1,7 @@
 """Fetch the pinned upstream PointPillars code + KITTI weights into third_party/ (no compiling).
 
-    python setup_pp.py              # git clone (cần git + mạng)
-    python setup_pp.py --zip FILE   # máy không có git: dùng file zip GitHub của commit đã ghim
+    python scripts/setup_pp.py              # git clone (cần git + mạng)
+    python scripts/setup_pp.py --zip FILE   # máy không có git: dùng file zip GitHub của commit đã ghim
 """
 
 from __future__ import annotations
@@ -16,9 +16,12 @@ import urllib.request
 import zipfile
 from pathlib import Path
 
+if not __package__:
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
 REPO = "https://github.com/zhulf0804/PointPillars"
 COMMIT = "620e6b0d07e4cb37b7b0114f26b934e8be92a0ba"
-DEST = Path(__file__).resolve().parent / "third_party" / "PointPillars"
+DEST = Path(__file__).resolve().parents[1] / "third_party" / "PointPillars"
 WEIGHTS = DEST / "pretrained" / "epoch_160.pth"
 
 
@@ -50,7 +53,7 @@ def from_zip(path: Path) -> None:
 
 
 def main() -> int:
-    import vf_common  # stdlib-only, safe before dependencies are installed
+    from scripts import vf_common  # stdlib-only, safe before dependencies are installed
     vf_common.configure_utf8_stdio()
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--zip", help="đường dẫn zip đã tải sẵn")

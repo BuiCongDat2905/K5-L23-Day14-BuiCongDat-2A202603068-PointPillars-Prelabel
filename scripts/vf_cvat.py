@@ -3,14 +3,14 @@
 Commands::
 
     # Day 14 (SEED do coach công bố lúc vào lab)
-    python vf_cvat.py day14 --student <ID> --seed <SEED> --data <Data-VF>          # ghi d14_<ID>/frames_A.txt, frames_B.txt
-    python vf_cvat.py prelabel --student <ID> --task A --data <Data-VF> --boxes d14_<ID>/pred_A.json --host <URL> --user <name> [--org SLUG]
-    python vf_cvat.py reference --student <ID> --task A --host <URL> --user <name>  # đọc box đã sửa -> d14_<ID>/ref_A.json
+    python scripts/vf_cvat.py day14 --student <ID> --seed <SEED> --data <Data-VF>          # ghi d14_<ID>/frames_A.txt, frames_B.txt
+    python scripts/vf_cvat.py prelabel --student <ID> --task A --data <Data-VF> --boxes d14_<ID>/pred_A.json --host <URL> --user <name> [--org SLUG]
+    python scripts/vf_cvat.py reference --student <ID> --task A --host <URL> --user <name>  # đọc box đã sửa -> d14_<ID>/ref_A.json
 
-    python vf_cvat.py day13 --student <ID> --data <data-VF> --host <URL> --user <name> [--org SLUG] [--dry-run] [--replace]
-    python vf_cvat.py report d13 --student <ID> --host <URL> --user <name> [--org SLUG] --out ./nop
-    python vf_cvat.py preview d13 --student <ID> --data <data-VF> --table nop/D13-<ID>-bangA.csv --out ./xem
-    python vf_cvat.py check d13 --student <ID> --data <data-VF> --table nop/D13-<ID>-bangA.csv
+    python scripts/vf_cvat.py day13 --student <ID> --data <data-VF> --host <URL> --user <name> [--org SLUG] [--dry-run] [--replace]
+    python scripts/vf_cvat.py report d13 --student <ID> --host <URL> --user <name> [--org SLUG] --out ./nop
+    python scripts/vf_cvat.py preview d13 --student <ID> --data <data-VF> --table nop/D13-<ID>-bangA.csv --out ./xem
+    python scripts/vf_cvat.py check d13 --student <ID> --data <data-VF> --table nop/D13-<ID>-bangA.csv
 
 The CVAT password is read from CVAT_PASSWORD or typed at a prompt. It is never
 written to disk.
@@ -31,9 +31,10 @@ import time
 import zipfile
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+if not __package__:
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-import vf_common as vf  # noqa: E402
+from scripts import vf_common as vf  # noqa: E402
 
 TABLE_A_FIELDS = [
     "student", "frame", "idx", "label", "x", "y", "z", "length", "width", "height",
@@ -233,7 +234,7 @@ def cmd_report(args) -> int:
 
 
 def _qa_inputs(args):
-    import vf_qa
+    from scripts import vf_qa
 
     student = vf.normalize_student(args.student)
     table = Path(args.table or f"nop/{vf.task_name(student)}-bangA.csv")
@@ -313,7 +314,7 @@ def cuboid_points(box: dict) -> list[float]:
 
 
 def cmd_day14(args) -> int:
-    import vf_d14
+    from scripts import vf_d14
 
     student = vf.normalize_student(args.student)
     seed = vf_d14.get_seed(args.seed)
@@ -352,7 +353,7 @@ def prelabel_state_path(host: str, org: str | None, task_id: int, name: str) -> 
 
 
 def cmd_prelabel(args) -> int:
-    import vf_d14
+    from scripts import vf_d14
 
     student = vf.normalize_student(args.student)
     name = d14_task_name(student, args.task)
@@ -363,7 +364,7 @@ def cmd_prelabel(args) -> int:
     boxes = prediction["frames"] if prediction is not None else {}
     missing = [n for n in names if n not in boxes]
     if args.boxes and missing:
-        raise SystemExit(f"{args.boxes} thiếu frame {missing}. Chạy pp_prelabel.py với --frames {frames_file}.")
+        raise SystemExit(f"{args.boxes} thiếu frame {missing}. Chạy scripts/pp_prelabel.py với --frames {frames_file}.")
     fingerprint = hashlib.sha256(json.dumps(prediction, sort_keys=True).encode("utf-8")).hexdigest()
     box_count = sum(len(boxes.get(n, [])) for n in names)
     print(f"Task: {name}  ({len(rows)} frame, {box_count} box pre-label)")
@@ -531,7 +532,7 @@ def main(argv=None) -> int:
     pre.add_argument("--student", required=True)
     pre.add_argument("--task", choices=["A", "B"], required=True)
     pre.add_argument("--data", required=True)
-    pre.add_argument("--boxes", help="JSON từ pp_prelabel.py --out (bỏ trống = task rỗng)")
+    pre.add_argument("--boxes", help="JSON từ scripts/pp_prelabel.py --out (bỏ trống = task rỗng)")
     pre.add_argument("--frames", help="mặc định d14_<ID>/frames_<task>.txt")
     for a in ("--host", "--user", "--org", "--bundle-out"):
         pre.add_argument(a)
