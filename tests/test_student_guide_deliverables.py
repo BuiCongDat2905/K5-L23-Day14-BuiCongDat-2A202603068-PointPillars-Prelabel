@@ -275,6 +275,9 @@ class TestStudentGuideDeliverables(unittest.TestCase):
         self.assertNotIn("K5-DAY14-HoVaTen-MSSV", html)
         self.assertNotIn("Khác với trước đây", html)
         self.assertNotIn("Trước buổi giảng", html)
+        self.assertNotIn("sau 09:00", html)
+        self.assertNotIn("sau lý thuyết", html)
+        self.assertNotIn("Đồng hồ:", html)
 
     def test_submission_docs_gitignore_and_readme_sync(self) -> None:
         for rel in (
