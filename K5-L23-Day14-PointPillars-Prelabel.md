@@ -126,11 +126,11 @@ Bạn chạy thử model trên 6 frame chung của buổi giảng trong `demo/fr
 :::code-tabs{title="Chạy pre-label 6 frame buổi giảng với cấu hình gốc và cấu hình thử ngưỡng"}
 ```powershell {title="Windows (PowerShell)"}
 python scripts/pp_prelabel.py --data "<Data-VF>" --frames demo/frames_lec.txt --out out/lec.json --plot out/lec_png
-python scripts/pp_prelabel.py --data "<Data-VF>" --frames demo/frames_lec.txt --set score_thr=0.4 --set min_points=5
+python scripts/pp_prelabel.py --data "<Data-VF>" --frames demo/frames_lec.txt --set score_thr=0.4 --set min_points=5 --out out/lec_filtered.json --plot out/lec_filtered_png
 ```
 ```bash {title="macOS / Linux (Bash)"}
 python scripts/pp_prelabel.py --data "<Data-VF>" --frames demo/frames_lec.txt --out out/lec.json --plot out/lec_png
-python scripts/pp_prelabel.py --data "<Data-VF>" --frames demo/frames_lec.txt --set score_thr=0.4 --set min_points=5
+python scripts/pp_prelabel.py --data "<Data-VF>" --frames demo/frames_lec.txt --set score_thr=0.4 --set min_points=5 --out out/lec_filtered.json --plot out/lec_filtered_png
 ```
 :::
 
@@ -140,11 +140,11 @@ python scripts/pp_prelabel.py --data "<Data-VF>" --frames demo/frames_lec.txt --
 :::image{src="walkthrough_images/cli_03_lec_prelabel_s05f40.jpg" alt="Ảnh 7 camera và BEV 50 m của frame s05f40 với 35 cuboid pre-label" caption="Ảnh out/lec_png/s05f40.jpg hiển thị 7 camera và BEV vòng đỏ 50 m kèm mã pp_id."}
 :::
 
-3. Chạy lệnh thứ hai với `--set score_thr=0.4 --set min_points=5` và so sánh số lượng box in trên terminal (chẳng hạn ở `s05f40` giảm từ `35` box xuống còn `20` box): quan sát xem những box biến mất là nhiễu trong lùm cây/hàng rào hay là phương tiện thật ở vành ngoài.
+3. Chạy lệnh thứ hai để lưu `out/lec_filtered.json` và 6 ảnh trong `out/lec_filtered_png/`. So sánh số hộp trên terminal (ví dụ `s05f40` giảm từ `35` xuống `20` hộp). Mở ảnh cùng mã frame trong hai thư mục để xem hộp bị lọc là hộp nhiễu hay đang bao một vật thể thật.
 
 ### Checkpoint Pha 1 và chuyển sang buổi chiều
 
-Pha 1 hoàn thành khi bạn đọc được cả hai đầu ra terminal của 6 frame buổi sáng, mở đủ 6 ảnh `out/lec_png/*.jpg` và giải thích được vì sao hệ số phạt `1.0` cho mỗi box bị sót lớn hơn gấp ba lần hệ số `0.3` cho mỗi box thừa. Kết thúc **45 phút** thực hành trong buổi lý thuyết sáng (`09:00–13:00`, gồm Pha 0 `10′` + Pha 1 `35′`), bạn sẵn sàng bước vào buổi thực hành chiều (`16:00–19:30`).
+Pha 1 hoàn thành khi bạn xem được kết quả trên terminal của cả hai lượt, đối chiếu ảnh của 6 frame giữa `out/lec_png/` và `out/lec_filtered_png/`, rồi giải thích được vì sao hệ số phạt `1.0` cho mỗi box bị sót lớn hơn gấp ba lần hệ số `0.3` cho mỗi box thừa. Kết thúc **45 phút** thực hành trong buổi lý thuyết sáng (`09:00–13:00`, gồm Pha 0 `10′` + Pha 1 `35′`), bạn sẵn sàng bước vào buổi thực hành chiều (`16:00–19:30`).
 
 ## Pha 2 — Lab Buổi chiều Tập A (Bước 1–5): Chọn frame theo SEED, pre-label và sửa tay trên CVAT (0:45 → 1:45 · 60 phút)
 

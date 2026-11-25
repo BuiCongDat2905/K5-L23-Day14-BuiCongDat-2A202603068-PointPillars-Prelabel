@@ -44,9 +44,9 @@ python scripts/pp_selftest.py --data "$DataVF"
 
 ```bash
 python scripts/pp_prelabel.py --data "$DataVF" --frames demo/frames_lec.txt --out out/lec.json --plot out/lec_png
-python scripts/pp_prelabel.py --data "$DataVF" --frames demo/frames_lec.txt --set score_thr=0.4 --set min_points=5
+python scripts/pp_prelabel.py --data "$DataVF" --frames demo/frames_lec.txt --set score_thr=0.4 --set min_points=5 --out out/lec_filtered.json --plot out/lec_filtered_png
 ```
-Mở ảnh trong `out/lec_png/`. Mỗi ảnh ghép 7 góc camera và hình nhìn từ trên xuống (BEV). Tìm vật thể được nhận diện đúng, vật thể bị sót và cuboid bị vẽ thừa.
+Lệnh đầu lưu `out/lec.json` và 6 ảnh trong `out/lec_png/`. Lệnh thứ hai lưu `out/lec_filtered.json` và 6 ảnh trong `out/lec_filtered_png/`. Mở cùng một frame trong hai thư mục để đối chiếu các hộp qua 7 góc camera và hình nhìn từ trên xuống (BEV). Xem hộp nào được lọc là hộp thừa và vật thể thật nào có thể bị sót.
 
 ## 2. Lab buổi chiều: frame riêng theo mã học viên + SEED
 
