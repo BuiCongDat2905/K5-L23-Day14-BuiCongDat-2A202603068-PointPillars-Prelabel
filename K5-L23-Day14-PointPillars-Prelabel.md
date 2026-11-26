@@ -35,6 +35,8 @@ Tạo cuboid dự đoán, đưa lên CVAT rồi sửa 3 frame tập A để có 
 
 Đẩy bài lên repo `K5-L23-DAY14-HoVaTen-MSSV-PointPillarsPrelabel`. Nộp link commit có SHA lên LMS trước **12:00 trưa hôm sau (GMT+7)**. Xem [SUBMISSION.md](SUBMISSION.md) để biết file cần nộp và [RUBRIC.md](RUBRIC.md) để biết cách chấm. Theo dõi tiến độ bằng [CHECKPOINTS.md](CHECKPOINTS.md), đọc [RULES.md](RULES.md) và dùng [mẫu báo cáo cá nhân](report/individual/MSSV_HoTen.md).
 
+**Sao chép lệnh.** Lấy lệnh từ bản Markdown hoặc dùng nút **Copy** trong bản HTML. Khi sao chép từ PDF, lệnh dài có thể bị tách thành nhiều dòng.
+
 ## Pha 0 — Cài đặt và kiểm tra môi trường (Buổi sáng · 0:00 → 0:10 · 10 phút)
 
 Cuối buổi lý thuyết sáng, clone repo và tạo môi trường Python 3.9+. Chuẩn bị đường dẫn `<Data-VF>` chứa trực tiếp `sequence_01` đến `sequence_05`. Xem [CHECKPOINTS.md](CHECKPOINTS.md) và [RULES.md](RULES.md) trước khi bắt đầu.
@@ -43,7 +45,9 @@ Cuối buổi lý thuyết sáng, clone repo và tạo môi trường Python 3.9
 - [Repository gốc Day 14](https://github.com/VinUni-AI20k/K5-L23-Day14-PointPillars-Prelabel)
 :::
 
-Chọn tab theo hệ điều hành để cài PyTorch CPU và các gói trong `requirements.txt`. `scripts/setup_pp.py` tải mã PointPillars ở commit `620e6b0` cùng trọng số `epoch_160.pth` (~20 MB). Nếu Git không tải được mã nguồn, chạy lại với `--download-zip`. Trên PowerShell 5.1, chạy từng dòng trong tab Windows.
+### Cài Python theo hệ điều hành
+
+Khối cài nhanh trong HTML chỉ dành cho **Windows PowerShell**. Nếu dùng macOS hoặc Linux, chọn tab **macOS / Linux (Bash)** bên dưới. Dùng tab tương ứng để cài PyTorch CPU và các gói trong `requirements.txt`. `scripts/setup_pp.py` tải mã PointPillars ở commit `620e6b0` cùng trọng số `epoch_160.pth` (~20 MB). Nếu Git không tải được mã nguồn, chạy lại với `--download-zip`. Trên PowerShell 5.1, chạy từng dòng trong tab Windows.
 
 :::code-tabs{title="Cài đặt môi trường Python CPU và tự kiểm tra cài đặt"}
 ```powershell {title="Windows (PowerShell)"}
