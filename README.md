@@ -57,11 +57,11 @@ SEED **chỉ được coach công bố lúc bắt đầu lab**. Thay `<ID>`, `<S
 | 1. Chọn frame | `python scripts/vf_cvat.py day14 --student "<ID>" --seed "<SEED>" --data "$DataVF"` | `d14_<ID>/frames_A.txt` (3 frame tune), `frames_B.txt` (12 frame nộp) |
 | 2. Pre-label A | `python scripts/pp_prelabel.py --data "$DataVF" --frames "d14_<ID>/frames_A.txt" --out "d14_<ID>/pred_A.json" --plot "d14_<ID>/png_A"` | box của cấu hình gốc + ảnh để xem |
 | 3. Lên CVAT | `python scripts/vf_cvat.py prelabel --student "<ID>" --task A --data "$DataVF" --boxes "d14_<ID>/pred_A.json" --host "<URL>" --user "<tên>"` | task `D14-<ID>-A` có sẵn cuboid (thuộc tính `pp_id`, `score`, `warn`, `note`) |
-| 4. Sửa tay A | Mở từng frame trên CVAT. Xóa hộp thừa, thêm hộp bị sót và chỉnh hộp sai theo hướng dẫn Day 13. Khi vẽ hộp mới, chọn **Shape**. Bấm **Save**. | nhãn tham chiếu của bạn |
+| 4. Sửa tay A | Mở từng frame trên CVAT. Xóa hộp thừa, thêm vật bị sót và chỉnh hộp sai theo [hướng dẫn gán nhãn 3D Cuboid](docs/GUIDELINE.md). Khi vẽ hộp mới, chọn **Shape**. Bấm **Save**. | nhãn tham chiếu của bạn |
 | 5. Lấy tham chiếu | `python scripts/vf_cvat.py reference --student "<ID>" --task A --host "<URL>" --user "<tên>"` | `d14_<ID>/ref_A.json` |
 | 5b. Dự đoán trước sweep | Làm theo [lệnh ghi và đẩy dự đoán](#đẩy-dự-đoán-trước-sweep-bước-5b). | Mục 1 báo cáo đã được push, làm bằng chứng khi đối chiếu ở bước 8 |
 | 6. Tune | `python scripts/pp_sweep.py --data "$DataVF" --frames "d14_<ID>/frames_A.txt" --gt "d14_<ID>/ref_A.json" --grid score_thr=0.1,0.2,0.3,0.4,0.5 --grid min_points=0,5,10 --out "d14_<ID>/sweep.csv"` | `sweep.csv`, `best_config.json`, top 10, leave-one-out |
-| 7. Pre-label B | `python scripts/pp_prelabel.py --data "$DataVF" --frames "d14_<ID>/frames_B.txt" --config "d14_<ID>/best_config.json" --out "d14_<ID>/pred_B.json"` rồi `python scripts/vf_cvat.py prelabel --student "<ID>" --task B --data "$DataVF" --boxes "d14_<ID>/pred_B.json" --host "<URL>" --user "<tên>"` | task `D14-<ID>-B` để sửa đủ 12 frame trên CVAT (**chọn `Shape`, KHÔNG chọn `Track`**) |
+| 7. Pre-label B | `python scripts/pp_prelabel.py --data "$DataVF" --frames "d14_<ID>/frames_B.txt" --config "d14_<ID>/best_config.json" --out "d14_<ID>/pred_B.json"` rồi `python scripts/vf_cvat.py prelabel --student "<ID>" --task B --data "$DataVF" --boxes "d14_<ID>/pred_B.json" --host "<URL>" --user "<tên>"` | task `D14-<ID>-B` để sửa đủ 12 frame trên CVAT theo [hướng dẫn gán nhãn 3D Cuboid](docs/GUIDELINE.md). Khi thêm hộp, chọn **Shape**. |
 | 8. Trước/sau | `python scripts/pp_compare.py --data "$DataVF" --frames "d14_<ID>/frames_A.txt" --gt "d14_<ID>/ref_A.json" --tuned "d14_<ID>/best_config.json" --out "d14_<ID>/compare"` | Mức thay đổi chi phí sửa và ảnh so sánh từng frame. Đưa một ảnh vào báo cáo và giải thích vì sao kết quả khớp hoặc lệch dự đoán ở bước 5b. |
 | 9. Xuất nhãn B, nộp | Làm theo [bước 9 bên dưới](#xuất-nhãn-và-đo-công-sửa-tập-b-bước-9). | `d14_<ID>/ref_B.json` và số đo cho mục 4 báo cáo |
 
@@ -96,7 +96,7 @@ Ghi số hộp cần xóa, thêm và sửa vào mục 4 báo cáo, rồi làm th
 
 Script tính chi phí bằng `0.3·xóa + 1.0·thêm + 0.5·sửa`. Script chỉ tính hộp có tâm cách LiDAR tối đa 50 m trên mặt phẳng ngang. Hai hộp được ghép nếu độ chồng lấp khi nhìn từ trên (BEV IoU) đạt ít nhất 0,3.
 
-Một hộp đã ghép vẫn tính là cần sửa nếu sai lớp, tâm lệch ngang quá 0,3 m, một kích thước lệch quá 0,2 m hoặc phương trục dài lệch quá 10°. Hai góc cách nhau 180° có cùng phương trục dài. Trên CVAT, vẫn căn đúng đầu xe và đặt đáy hộp sát mặt đường theo hướng dẫn Day 13.
+Một hộp đã ghép vẫn tính là cần sửa nếu sai lớp, tâm lệch ngang quá 0,3 m, một kích thước lệch quá 0,2 m hoặc phương trục dài lệch quá 10°. Hai góc cách nhau 180° có cùng phương trục dài. Trên CVAT, vẫn căn đúng đầu xe và đặt đáy hộp sát mặt đường theo [hướng dẫn gán nhãn 3D Cuboid](docs/GUIDELINE.md#2-quy-tắc-cuboid).
 
 ### Xử lý lỗi CVAT
 
