@@ -35,6 +35,8 @@ Tạo cuboid dự đoán, đưa lên CVAT rồi sửa 3 frame tập A để có 
 
 Đẩy bài lên repo `K5-L23-DAY14-HoVaTen-MSSV-PointPillarsPrelabel`. Nộp link commit có SHA lên LMS trước **12:00 trưa hôm sau (GMT+7)**. Xem [SUBMISSION.md](SUBMISSION.md) để biết file cần nộp và [RUBRIC.md](RUBRIC.md) để biết cách chấm. Theo dõi tiến độ bằng [CHECKPOINTS.md](CHECKPOINTS.md), đọc [RULES.md](RULES.md) và dùng [mẫu báo cáo cá nhân](report/individual/MSSV_HoTen.md).
 
+**Sao chép lệnh.** Lấy lệnh từ bản Markdown hoặc dùng nút **Copy** trong bản HTML. Khi sao chép từ PDF, lệnh dài có thể bị tách thành nhiều dòng.
+
 ## Pha 0 — Cài đặt và kiểm tra môi trường (Buổi sáng · 0:00 → 0:10 · 10 phút)
 
 Cuối buổi lý thuyết sáng, clone repo và tạo môi trường Python 3.9+. Chuẩn bị đường dẫn `<Data-VF>` chứa trực tiếp `sequence_01` đến `sequence_05`. Xem [CHECKPOINTS.md](CHECKPOINTS.md) và [RULES.md](RULES.md) trước khi bắt đầu.
@@ -43,7 +45,9 @@ Cuối buổi lý thuyết sáng, clone repo và tạo môi trường Python 3.9
 - [Repository gốc Day 14](https://github.com/VinUni-AI20k/K5-L23-Day14-PointPillars-Prelabel)
 :::
 
-Chọn tab theo hệ điều hành để cài PyTorch CPU và các gói trong `requirements.txt`. `scripts/setup_pp.py` tải mã PointPillars ở commit `620e6b0` cùng trọng số `epoch_160.pth` (~20 MB). Nếu Git không tải được mã nguồn, chạy lại với `--download-zip`. Trên PowerShell 5.1, chạy từng dòng trong tab Windows.
+### Cài Python theo hệ điều hành
+
+Khối cài nhanh trong HTML chỉ dành cho **Windows PowerShell**. Nếu dùng macOS hoặc Linux, chọn tab **macOS / Linux (Bash)** bên dưới. Dùng tab tương ứng để cài PyTorch CPU và các gói trong `requirements.txt`. `scripts/setup_pp.py` tải mã PointPillars ở commit `620e6b0` cùng trọng số `epoch_160.pth` (~20 MB). Nếu Git không tải được mã nguồn, chạy lại với `--download-zip`. Trên PowerShell 5.1, chạy từng dòng trong tab Windows.
 
 :::code-tabs{title="Cài đặt môi trường Python CPU và tự kiểm tra cài đặt"}
 ```powershell {title="Windows (PowerShell)"}
@@ -168,15 +172,12 @@ Lệnh `reference` dừng nếu task còn **Track**. Vẽ lại các hộp đó 
 
 ### Chạy lệnh cho tập A
 
-Dùng ba lệnh đầu để tạo frame, sinh pre-label và nạp tập A lên CVAT. Dừng để sửa và lưu nhãn ở bước 4, rồi chạy hai lệnh cuối để xuất và đo công sửa. Nhập mật khẩu ở dấu nhắc CVAT hoặc dùng biến `CVAT_PASSWORD`.
+Chạy ba lệnh dưới đây để chọn frame, tạo nhãn dự đoán và nạp tập A lên CVAT. Nhập mật khẩu ở dấu nhắc CVAT hoặc dùng biến `CVAT_PASSWORD`. Sau khi task xuất hiện, mở job và làm bước 4.
 
 ```bash
 python scripts/vf_cvat.py day14 --student "<ID>" --seed "<SEED>" --data "<Data-VF>"
 python scripts/pp_prelabel.py --data "<Data-VF>" --frames "d14_<ID>/frames_A.txt" --out "d14_<ID>/pred_A.json" --plot "d14_<ID>/png_A"
 python scripts/vf_cvat.py prelabel --student "<ID>" --task A --data "<Data-VF>" --boxes "d14_<ID>/pred_A.json" --host http://localhost:8080 --user "<ten>"
-# ... Sửa tay tập A trên CVAT 3D (Bước 4) và bấm Save ...
-python scripts/vf_cvat.py reference --student "<ID>" --task A --host http://localhost:8080 --user "<ten>"
-python scripts/pp_prelabel.py --data "<Data-VF>" --frames "d14_<ID>/frames_A.txt" --gt "d14_<ID>/ref_A.json"
 ```
 
 1. **Bước 1 — Sinh danh sách frame:** Chạy `scripts/vf_cvat.py day14` tạo `d14_<ID>/frames_A.txt` và `frames_B.txt`; giữ nguyên dòng `seed_tag=` để coach đối chiếu SEED.
@@ -226,7 +227,19 @@ python scripts/pp_prelabel.py --data "<Data-VF>" --frames "d14_<ID>/frames_A.txt
 :::image{src="walkthrough_images/cvat_10_saved_clean_46_items.png" alt="Màn hình CVAT sau khi bấm Save với đủ 46 cuboid dạng Shape" caption="Bấm Save tới khi nút Save mờ đi trước khi chạy lệnh kéo nhãn tham chiếu về máy."}
 :::
 
-5. **Bước 5.** Chạy `scripts/vf_cvat.py reference --task A` để xuất `d14_<ID>/ref_A.json`. Đối chiếu số hộp với **Items** trên CVAT. Nếu server đảo chiều dài và chiều rộng, thêm `--scale-order wlh`. Sau đó dùng `scripts/pp_prelabel.py` với `--gt d14_<ID>/ref_A.json` để đo chi phí của cấu hình gốc.
+### Xuất nhãn và đo công sửa tập A (bước 5)
+
+Sửa đủ 3 frame rồi bấm **Save** trong CVAT. Quay lại terminal và xuất nhãn tham chiếu.
+
+```bash
+python scripts/vf_cvat.py reference --student "<ID>" --task A --host http://localhost:8080 --user "<ten>"
+```
+
+**Chỉ chạy lệnh đo sau khi lệnh xuất in Đã ghi** và liệt kê đủ 3 frame. Đối chiếu số cuboid của từng frame với **Items** trên CVAT. Nếu lệnh xuất báo lỗi, xử lý rồi xuất lại để tránh đo bằng `ref_A.json` cũ. Nếu server xuất đảo chiều dài và chiều rộng, thêm `--scale-order wlh` khi xuất lại.
+
+```bash
+python scripts/pp_prelabel.py --data "<Data-VF>" --frames "d14_<ID>/frames_A.txt" --gt "d14_<ID>/ref_A.json"
+```
 
 ### Kiểm tra file và số đo tập A (1:45 → 1:55 · 10 phút)
 
@@ -236,7 +249,7 @@ Kiểm tra có đủ `frames_A.txt`, `frames_B.txt`, `pred_A.json` và `ref_A.js
 
 ### Bước 5b. Ghi và đẩy dự đoán
 
-Điền mã học viên và `seed_tag` vào mục 1 của báo cáo. Viết hai dòng về tham số bạn nghĩ sẽ giảm công sửa nhiều nhất và lý do. Dùng ảnh BEV trong `png_A/` cùng số xóa, thêm và sửa đã đo ở bước 5.
+Điền mã học viên và `seed_tag` ở đầu mẫu báo cáo. Trong mục 1, chỉ ghi tham số bạn nghĩ sẽ giảm công sửa nhiều nhất và lý do. Dùng ảnh BEV trong `png_A/` cùng số xóa, thêm và sửa đã đo ở bước 5.
 
 Ví dụ, nếu ảnh cho thấy nhiều hộp thừa có điểm tin cậy thấp, hãy giải thích vì sao bạn dự đoán tăng `score_thr` sẽ giảm số hộp phải xóa.
 
@@ -306,19 +319,11 @@ Commit các file bắt buộc theo [SUBMISSION.md](SUBMISSION.md). `.gitignore` 
 
 Nếu repo là Private, mời tài khoản GitHub của coach. Nộp link dạng `https://github.com/<tai-khoan>/<repo>/commit/<SHA>` lên LMS trước **12:00 trưa hôm sau (GMT+7)**. Giữ commit đã nộp theo [RULES.md](RULES.md).
 
-### Tạo task B, xuất nhãn và nộp bài
+### Tạo task B và sửa cuboid (bước 7)
 
 ```bash
 python scripts/pp_prelabel.py --data "<Data-VF>" --frames "d14_<ID>/frames_B.txt" --config "d14_<ID>/best_config.json" --out "d14_<ID>/pred_B.json"
 python scripts/vf_cvat.py prelabel --student "<ID>" --task B --data "<Data-VF>" --boxes "d14_<ID>/pred_B.json" --host http://localhost:8080 --user "<ten>"
-# ... Mở task D14-<ID>-B trên CVAT 3D, sửa đủ 12 frame bằng Shape và bấm Save ...
-python scripts/vf_cvat.py reference --student "<ID>" --task B --host http://localhost:8080 --user "<ten>"
-python scripts/pp_prelabel.py --data "<Data-VF>" --frames "d14_<ID>/frames_B.txt" --config "d14_<ID>/best_config.json" --gt "d14_<ID>/ref_B.json"
-# ... Điền mục 4 & mục 5 vào report/individual/<MSSV>_<HoTen>.md rồi commit & push ...
-git add "d14_<ID>" report
-git commit -m "Day 14: bài nộp"
-git push -u origin main
-git rev-parse HEAD
 ```
 
 1. **Bước 7a–7b.** Tạo `pred_B.json` từ `frames_B.txt` bằng cấu hình `best_config.json`. Nạp dự đoán lên CVAT để tạo task `D14-<ID>-B`. Kiểm tra trang **Tasks** có task A và task B. Khi tiếp tục trên task B đã tạo, dùng lại đúng file dự đoán đã nạp. Nếu script phát hiện file đã đổi, lệnh dừng và giữ nguyên nhãn cũ. Nếu script báo chưa thể đối chiếu, kiểm tra lại file đã nạp lúc tạo task. Trao đổi với coach trước khi tạo lại task vì `--replace` xóa toàn bộ nhãn đã sửa.
@@ -327,8 +332,34 @@ git rev-parse HEAD
 :::
 
 2. **Bước 7c.** Kiểm đủ 12 frame của `D14-<ID>-B` theo [hướng dẫn gán nhãn 3D Cuboid](docs/GUIDELINE.md). Rà lớp và hình hộp, xóa hộp thừa và dùng **Shape** để thêm vật bị sót trong 50 m. Bấm **Save**.
-3. **Bước 9.** Xuất `d14_<ID>/ref_B.json` và kiểm tra đủ 12 frame. Đối chiếu số hộp xuất với **Items** trên CVAT. Chạy lệnh đo công sửa tập B ở [bước 9 trong README](README.md#xuất-nhãn-và-đo-công-sửa-tập-b-bước-9). Ghi số hộp cần xóa, thêm, sửa và chi phí vào mục 4. Nêu ít nhất hai giới hạn trong mục 5 báo cáo.
-4. **Nộp bài.** Chạy lệnh Git theo [SUBMISSION.md](SUBMISSION.md#1-repo-nộp) từ gốc repo. Thay `<ID>` bằng mã trong tên thư mục đã tạo ở bước 1. Mở commit bạn vừa push lên repo cá nhân, rồi nộp link commit trên LMS trước **12:00 trưa hôm sau (GMT+7)**.
+### Xuất nhãn và đo công sửa tập B (bước 9)
+
+Sau khi sửa đủ 12 frame và bấm **Save**, quay lại terminal để xuất nhãn.
+
+```bash
+python scripts/vf_cvat.py reference --student "<ID>" --task B --host http://localhost:8080 --user "<ten>"
+```
+
+**Chỉ chạy lệnh đo sau khi lệnh xuất in Đã ghi** và liệt kê đủ 12 frame. Đối chiếu số hộp từng frame với **Items**. Nếu lệnh xuất báo lỗi, xử lý rồi xuất lại để tránh dùng `ref_B.json` cũ. Xem thêm [bước 9 trong README](README.md#xuất-nhãn-và-đo-công-sửa-tập-b-bước-9).
+
+```bash
+python scripts/pp_prelabel.py --data "<Data-VF>" --frames "d14_<ID>/frames_B.txt" --config "d14_<ID>/best_config.json" --gt "d14_<ID>/ref_B.json"
+```
+
+Ghi số hộp cần xóa, thêm, sửa và chi phí vào mục 4 của báo cáo. Nêu ít nhất hai giới hạn ở mục 5.
+
+### Commit và nộp link (bước 9)
+
+Chỉ commit sau khi đã kiểm đủ file theo [SUBMISSION.md](SUBMISSION.md#1-repo-nộp) và điền xong báo cáo. Chạy từ gốc repo, thay `<ID>` bằng mã trong tên thư mục đã tạo ở bước 1.
+
+```bash
+git add "d14_<ID>" report
+git commit -m "Day 14: bài nộp"
+git push -u origin main
+git rev-parse HEAD
+```
+
+Khi push thành công, mở repo cá nhân trên GitHub và xác nhận commit `Day 14: bài nộp` có đủ file. Nộp link commit đó lên LMS trước **12:00 trưa hôm sau (GMT+7)**.
 
 ```text
 K5-L23-DAY14-HoVaTen-MSSV-PointPillarsPrelabel/
