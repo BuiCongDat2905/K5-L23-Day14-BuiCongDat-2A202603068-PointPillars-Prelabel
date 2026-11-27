@@ -5,6 +5,8 @@
 
 ## 1. Dự đoán trước sweep (bước 5b)
 
+> Ghi chú trung thực: commit `5b update` (`bc5a578`) chỉ chứa báo cáo template, không có nội dung dự đoán. Nội dung dưới đây được ghi lại sau khi đã có kết quả sweep, nên đây là nhận định hồi cứu, không phải dự đoán ghi trước sweep. Phần đối chiếu ở mục 3 vì vậy chỉ mang tính tham khảo.
+
 - Tham số tôi nghĩ giảm công sửa nhiều nhất: `score_thr` (tăng từ 0.1 lên 0.5).
 - Vì sao: ảnh BEV tập A cho thấy box thừa khá nhiều quanh các cụm điểm nhiễu, trong khi box sót ít hơn. Tăng ngưỡng tin cậy sẽ bỏ bớt box thừa; `min_points` tôi đoán ít tác dụng vì box thừa vẫn có đủ điểm.
 
@@ -27,7 +29,7 @@
 ![so sánh](../../d14_068/compare/s05f17.jpg)
 
 - `scripts/pp_compare.py` báo giảm 33% công sửa trên tập A (22.8 → 15.3).
-- Dự đoán ở mục 1 đúng: tăng `score_thr` làm giảm box thừa rõ rệt (xóa 51 → 11). Nhưng đổi lại box sót tăng (thêm 7 → 12), nên mức giảm thực tế thấp hơn kỳ vọng ban đầu. Đúng hướng, chưa đúng mức.
+- Đối chiếu hồi cứu với nhận định ở mục 1: tăng `score_thr` làm giảm box thừa rõ rệt (xóa 51 → 11). Nhưng đổi lại box sót tăng (thêm 7 → 12), nên mức giảm thực tế thấp hơn kỳ vọng. Đúng hướng, chưa đúng mức. Vì mục 1 không được ghi trước sweep, đây không phải bằng chứng dự đoán đúng.
 
 ## 4. Tập B
 
